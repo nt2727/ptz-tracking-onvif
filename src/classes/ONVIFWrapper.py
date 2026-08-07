@@ -4,24 +4,23 @@ ONVIFWrapper
 ============
 NovaVision `bootstrap()` aşamasında bir kez oluşturulur ve process ömrü boyunca
 memory'de tutulur (rapor md. 3.2 - Camera Connection Pool / State Management).
-
-Kamera ile tüm SOAP iletişimi ayrı bir arka plan thread'inde çalışan kendi
-asyncio event loop'u üzerinden yürütülür (rapor md. 2.2 - Asynchronous Structure).
-`continuous_move` / `go_to_preset` gibi metodlar bu yüzden senkron (bloklamayan)
-görünür: komutu `asyncio.run_coroutine_threadsafe` ile arka plan loop'una atar
-ve hemen döner - ana video işleme pipeline'ı asla ONVIF ağ gecikmesiyle bloklanmaz.
-
-Kütüphane: onvif-zeep-async (Roboflow'un onvif-zeep-f'i ile aynı API yüzeyi:
-ONVIFCamera, await cam.update_xaddrs(), await cam.create_ptz_service() vb.)
 """
-
 import asyncio
 import threading
 import time
 from typing import Optional, Dict
 
 from onvif import ONVIFCamera
-from onvif.util import discover  # WS-Discovery için import
+
+# WS-Discovery import'ını try-except ile dene, çalışmazsa devre dışı bırak
+try:
+    from onvif.util import discover
+except ImportError:
+    # onvif-zeep-f kütüphanesinde discover modülü olmayabilir, dummy fonksiyon oluştur
+    def discover(timeout=5):
+        print("[ONVIF WS-Discovery] Modül bulunamadı. Varsayılan IP döndürülüyor.")
+        # Sabit IP döndür (Simülasyon için)
+        return [("127.0.0.1", 80, "admin")]
 
 from sdks.novavision.src.base.logger import LoggerManager
 
@@ -83,7 +82,6 @@ class ONVIFWrapper:
         self._last_y = 0.0
         self._last_z = 0.0
 
-        # simulate_variable_speed sayaçları (rapor md. 2.2)
         self._sim_count_x = 0
         self._sim_count_y = 0
         self._sim_count_z = 0
@@ -95,12 +93,6 @@ class ONVIFWrapper:
     # ------------------------------------------------------------------
 
     def start_background_loop(self):
-        """
-        bootstrap() içinde çağrılır. Kendi asyncio event loop'unu ayrı bir
-        daemon thread'de başlatır ve kamera bağlantısını o loop üzerine
-        planlar (fire-and-forget - bootstrap'ı bloklamamak için beklemiyoruz,
-        bağlantı hazır olana kadar continuous_move no-op döner).
-        """
         self.loop = asyncio.new_event_loop()
 
         def _run():
@@ -182,11 +174,6 @@ class ONVIFWrapper:
 
     @staticmethod
     def _simulate_speed(speed: float, count: int, can_update: bool):
-        """
-        Değişken hız desteklemeyen kameralar için: %speed kadar süre max hızda
-        hareket ettirip sonra durdurma komutu göndererek ortalama hızı simüle
-        eder (rapor md. 2.2).
-        """
         count += 1
         if speed != 0 and count >= max(1, int(round(1.0 / abs(speed)))):
             speed = 1.0 if speed > 0 else -1.0
@@ -201,17 +188,13 @@ class ONVIFWrapper:
     # ------------------------------------------------------------------
 
     def continuous_move(
-            self,
-            x: float,
-            y: float,
-            z: float = 0.0,
-            rate_limit_ms: int = 250,
-            simulate_variable_speed: bool = False,
+        self,
+        x: float,
+        y: float,
+        z: float = 0.0,
+        rate_limit_ms: int = 250,
+        simulate_variable_speed: bool = False,
     ):
-        """
-        x, y, z: -1..1 aralığında normalize hız komutları.
-        Thread-safe, non-blocking - komutu arka plan loop'una atar ve döner.
-        """
         if not self._connected or self._ptz is None:
             return
 
@@ -222,9 +205,6 @@ class ONVIFWrapper:
             y, self._sim_count_y = self._simulate_speed(y, self._sim_count_y, can_update)
             z, self._sim_count_z = self._simulate_speed(z, self._sim_count_z, can_update)
 
-        # dur komutlarını rate limit'ten muaf tutuyoruz: hunting'i önlemek için
-        # "dur" her zaman hemen gitmeli, aksi halde obje dead zone'a girdiğinde
-        # kamera rate_limit_ms kadar daha hareket etmeye devam eder.
         stopping = (x == 0 and self._last_x != 0) or (y == 0 and self._last_y != 0) or (z == 0 and self._last_z != 0)
 
         if not stopping and not can_update:
@@ -249,7 +229,6 @@ class ONVIFWrapper:
             logger.error(f"ONVIFWrapper - ContinuousMove hatası: {e}")
 
     def stop(self):
-        """Anlık dur komutu - rate limit'e tabi değil."""
         self.continuous_move(0, 0, 0, rate_limit_ms=0)
 
     def go_to_preset(self, preset_name: str):
@@ -285,18 +264,13 @@ class ONVIFWrapper:
             pass
 
     # ==================================================================
-    # YENİ EKLENEN METODLAR: WS-Discovery (Otomatik Kamera Bulma)
+    # WS-Discovery (Otomatik Kamera Bulma)
     # ==================================================================
 
     @staticmethod
     def discover_cameras(timeout: int = 5, username: str = "admin", password: str = "admin"):
-        """
-        Ağdaki tüm ONVIF uyumlu kameraları WS-Discovery ile tarar.
-        Dönen liste: [('192.168.1.10', 80, [...]), ...] şeklindedir.
-        """
-        print("[ONVIF] Ağda ONVIF kamera aranıyor... (Bu işlem birkaç saniye sürebilir)")
+        print("[ONVIF] Ağda ONVIF kamera aranıyor...")
         try:
-            # WS-Discovery genellikle auth gerektirmez, ama parametre olarak tutuyoruz
             devices = discover(timeout=timeout)
             return devices
         except Exception as e:
@@ -304,17 +278,12 @@ class ONVIFWrapper:
             return []
 
     def connect_from_discovery(self, device_info, username: str = "admin", password: str = "admin"):
-        """
-        WS-Discovery'den gelen bilgilerle bağlantı kurar.
-        Mevcut bağlantıyı sıfırlar ve yeni kimlik bilgileriyle bağlanır.
-        """
         ip, port, _ = device_info
         self.ip = ip
         self.port = port
         self.username = username
         self.password = password
 
-        # Bağlantı durumunu sıfırla
         self._connected = False
         self._connect_error = None
         self.camera = None
@@ -323,5 +292,4 @@ class ONVIFWrapper:
         self._velocity_limits = None
         self._presets = {}
 
-        # Yeni bağlantıyı başlat
         self.start_background_loop()

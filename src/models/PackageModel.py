@@ -74,10 +74,10 @@ class OutputSeeking(Output):
 
 
 # ==========================================
-# 1. PTZ Tracking Executor Configurations
+# 1. PTZ Tracking Executor Configurations (FLAT YAPIYA GEÇİLDİ)
 # ==========================================
 class ConfigCameraIP(Config):
-    name: Literal["cameraIP"] = "CameraIP"
+    name: Literal["CameraIP"] = "CameraIP"  # DÜZELTİLDİ: Büyük harf ile eşleşmeli
     value: str = Field(default="127.0.0.1")
     type: Literal["string"] = "string"
     field: Literal["textInput"] = "textInput"
@@ -88,7 +88,7 @@ class ConfigCameraIP(Config):
 
 
 class ConfigCameraPort(Config):
-    name: Literal["cameraPort"] = "CameraPort"
+    name: Literal["CameraPort"] = "CameraPort"  # DÜZELTİLDİ
     value: int = Field(default=80, ge=1, le=65535)
     type: Literal["integer"] = "integer"
     field: Literal["textInput"] = "textInput"
@@ -99,7 +99,7 @@ class ConfigCameraPort(Config):
 
 
 class ConfigCameraUsername(Config):
-    name: Literal["cameraUsername"] = "CameraUsername"
+    name: Literal["CameraUsername"] = "CameraUsername"  # DÜZELTİLDİ
     value: str = Field(default="admin")
     type: Literal["string"] = "string"
     field: Literal["textInput"] = "textInput"
@@ -110,7 +110,7 @@ class ConfigCameraUsername(Config):
 
 
 class ConfigCameraPassword(Config):
-    name: Literal["cameraPassword"] = "CameraPassword"
+    name: Literal["CameraPassword"] = "CameraPassword"  # DÜZELTİLDİ
     value: str = Field(default="admin")
     type: Literal["string"] = "string"
     field: Literal["password"] = "password"
@@ -121,7 +121,7 @@ class ConfigCameraPassword(Config):
 
 
 class ConfigPIDKp(Config):
-    name: Literal["pidKp"] = "PIDKp"
+    name: Literal["PIDKp"] = "PIDKp"  # DÜZELTİLDİ
     value: float = Field(default=0.2, ge=0, le=1)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
@@ -132,7 +132,7 @@ class ConfigPIDKp(Config):
 
 
 class ConfigPIDKi(Config):
-    name: Literal["pidKi"] = "PIDKi"
+    name: Literal["PIDKi"] = "PIDKi"  # DÜZELTİLDİ
     value: float = Field(default=0.0, ge=0, le=1)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
@@ -143,7 +143,7 @@ class ConfigPIDKi(Config):
 
 
 class ConfigPIDKd(Config):
-    name: Literal["pidKd"] = "PIDKd"
+    name: Literal["PIDKd"] = "PIDKd"  # DÜZELTİLDİ
     value: float = Field(default=2.0, ge=0, le=10)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
@@ -154,7 +154,7 @@ class ConfigPIDKd(Config):
 
 
 class ConfigDeadZone(Config):
-    name: Literal["deadZone"] = "DeadZone"
+    name: Literal["DeadZone"] = "DeadZone"  # DÜZELTİLDİ
     value: int = Field(default=50, ge=0, le=500)
     type: Literal["integer"] = "integer"
     field: Literal["textInput"] = "textInput"
@@ -165,7 +165,7 @@ class ConfigDeadZone(Config):
 
 
 class ConfigUpdateRateLimit(Config):
-    name: Literal["updateRateLimit"] = "UpdateRateLimit"
+    name: Literal["UpdateRateLimit"] = "UpdateRateLimit"  # DÜZELTİLDİ
     value: int = Field(default=100, ge=10, le=1000)
     type: Literal["integer"] = "integer"
     field: Literal["textInput"] = "textInput"
@@ -175,9 +175,8 @@ class ConfigUpdateRateLimit(Config):
         json_schema_extra = {"shortDescription": "Rate Limit ms"}
 
 
-# --- YENİ EKLENEN CONFIG'LER ---
 class ConfigMovementType(Config):
-    name: Literal["movementType"] = "MovementType"
+    name: Literal["MovementType"] = "MovementType"  # DÜZELTİLDİ
     value: Literal["Follow", "GoToPreset"] = "Follow"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
@@ -188,7 +187,7 @@ class ConfigMovementType(Config):
 
 
 class ConfigFollowTracker(Config):
-    name: Literal["followTracker"] = "FollowTracker"
+    name: Literal["FollowTracker"] = "FollowTracker"  # DÜZELTİLDİ
     value: bool = True
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
@@ -199,7 +198,7 @@ class ConfigFollowTracker(Config):
 
 
 class ConfigFlipXMovement(Config):
-    name: Literal["flipXMovement"] = "FlipXMovement"
+    name: Literal["FlipXMovement"] = "FlipXMovement"  # DÜZELTİLDİ
     value: bool = False
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
@@ -210,7 +209,7 @@ class ConfigFlipXMovement(Config):
 
 
 class ConfigFlipYMovement(Config):
-    name: Literal["flipYMovement"] = "FlipYMovement"
+    name: Literal["FlipYMovement"] = "FlipYMovement"  # DÜZELTİLDİ
     value: bool = True
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
@@ -221,7 +220,7 @@ class ConfigFlipYMovement(Config):
 
 
 class ConfigZoomIfAble(Config):
-    name: Literal["zoomIfAble"] = "ZoomIfAble"
+    name: Literal["ZoomIfAble"] = "ZoomIfAble"  # DÜZELTİLDİ
     value: bool = False
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
@@ -232,7 +231,7 @@ class ConfigZoomIfAble(Config):
 
 
 class ConfigSimulateVariableSpeed(Config):
-    name: Literal["simulateVariableSpeed"] = "SimulateVariableSpeed"
+    name: Literal["SimulateVariableSpeed"] = "SimulateVariableSpeed"  # DÜZELTİLDİ
     value: bool = False
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
@@ -243,7 +242,7 @@ class ConfigSimulateVariableSpeed(Config):
 
 
 class ConfigMinimumCameraSpeed(Config):
-    name: Literal["minimumCameraSpeed"] = "MinimumCameraSpeed"
+    name: Literal["MinimumCameraSpeed"] = "MinimumCameraSpeed"  # DÜZELTİLDİ
     value: float = Field(default=0.05, ge=0, le=1)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
@@ -254,7 +253,7 @@ class ConfigMinimumCameraSpeed(Config):
 
 
 class ConfigDefaultPositionPreset(Config):
-    name: Literal["defaultPositionPreset"] = "DefaultPositionPreset"
+    name: Literal["DefaultPositionPreset"] = "DefaultPositionPreset"  # DÜZELTİLDİ
     value: str = Field(default="")
     type: Literal["string"] = "string"
     field: Literal["textInput"] = "textInput"
@@ -265,7 +264,7 @@ class ConfigDefaultPositionPreset(Config):
 
 
 class ConfigMoveToPositionAfterIdleSeconds(Config):
-    name: Literal["moveToPositionAfterIdleSeconds"] = "MoveToPositionAfterIdleSeconds"
+    name: Literal["MoveToPositionAfterIdleSeconds"] = "MoveToPositionAfterIdleSeconds"  # DÜZELTİLDİ
     value: int = Field(default=30, ge=0)
     type: Literal["integer"] = "integer"
     field: Literal["textInput"] = "textInput"
@@ -275,11 +274,8 @@ class ConfigMoveToPositionAfterIdleSeconds(Config):
         json_schema_extra = {"shortDescription": "Auto-reset after idle seconds"}
 
 
-class ConfigPTZAdvanceTrue(Config):
-    name: Literal["True"] = "True"
-    value: Literal["True"] = "True"
-    type: Literal["bool"] = "bool"
-    field: Literal["option"] = "option"
+# NOT: ConfigPTZAdvance ve ConfigPTZAdvanceTrue/False TAMAMEN KALDIRILDI. Flat yapıya geçildi.
+class PTZTrackingConfigs(Configs):
     configCameraIP: ConfigCameraIP
     configCameraPort: ConfigCameraPort
     configCameraUsername: ConfigCameraUsername
@@ -298,35 +294,6 @@ class ConfigPTZAdvanceTrue(Config):
     configMinimumCameraSpeed: ConfigMinimumCameraSpeed
     configDefaultPositionPreset: ConfigDefaultPositionPreset
     configMoveToPositionAfterIdleSeconds: ConfigMoveToPositionAfterIdleSeconds
-
-    class Config:
-        title = "Enable Advanced Settings"
-
-
-class ConfigPTZAdvanceFalse(Config):
-    name: Literal["False"] = "False"
-    value: Literal["False"] = "False"
-    type: Literal["bool"] = "bool"
-    field: Literal["option"] = "option"
-
-    class Config:
-        title = "Disable Advanced Settings"
-
-
-class ConfigPTZAdvance(Config):
-    name: Literal["ConfigPTZAdvance"] = "ConfigPTZAdvance"
-    value: Union[ConfigPTZAdvanceTrue, ConfigPTZAdvanceFalse]
-    type: Literal["object"] = "object"
-    field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    restart: Literal[True] = True
-
-    class Config:
-        title = "Advance"
-        json_schema_extra = {"shortDescription": "Advanced Settings"}
-
-
-class PTZTrackingConfigs(Configs):
-    configPTZAdvance: ConfigPTZAdvance
 
 
 class PTZTrackingInputs(Inputs):
@@ -363,11 +330,6 @@ class PTZTrackingExecutor(Config):
         json_schema_extra = {"target": {"value": 0}}
 
 
-# ==========================================
-# 2. Global Package Configuration
-# ==========================================
-
-# Yeni Otomatik Executor Tipi:
 class PTZTrackingAutoExecutor(Config):
     name: Literal["PTZTrackingAuto"] = "PTZTrackingAuto"
     value: Union[PTZTrackingRequest, PTZTrackingResponse]
@@ -380,7 +342,6 @@ class PTZTrackingAutoExecutor(Config):
 
 class ConfigExecutor(Config):
     name: Literal["ConfigExecutor"] = "ConfigExecutor"
-    # Artık iki executor tipini de kabul ediyoruz:
     value: Union[PTZTrackingExecutor, PTZTrackingAutoExecutor]
     type: Literal["executor"] = "executor"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
@@ -388,12 +349,15 @@ class ConfigExecutor(Config):
     class Config:
         title = "Task"
 
-# ==========================================
-# 3. Package Root Models (Eksik Olan Kısım)
-# ==========================================
 
+# ==========================================
+# 2. Global Package Configuration
+# ==========================================
 class PackageConfigs(Configs):
     executor: ConfigExecutor
 
+
 class PackageModel(Package):
     configs: PackageConfigs
+    type: Literal["capsule"] = "capsule"
+    name: Literal["PTZTracking"] = "PTZTracking"

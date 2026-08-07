@@ -32,59 +32,26 @@ class PTZTracking(Capsule):
     @staticmethod
     def bootstrap(config: dict) -> dict:
         app = Application()
-        advance = app.get_param(config, "ConfigPTZAdvance")
 
-        # Default değerler
-        ip, port, username, password = "127.0.0.1", 80, "admin", "admin"
-        kp, ki, kd = 0.2, 0.0, 2.0
-        dead_zone, update_rate = 50, 100
-        movement_type = "Follow"
-        follow_tracker = True
-        flip_x, flip_y = False, True
-        zoom_if_able = False
-        simulate_variable_speed = False
-        minimum_camera_speed = 0.05
-        default_position_preset = ""
-        idle_seconds = 30
-
-        if advance == "True":
-            # Güvenli get_param kullanımı (Claude'un önerdiği yapı)
-            if app.get_param(config, "CameraIP"):
-                ip = app.get_param(config, "CameraIP")
-            if app.get_param(config, "CameraPort"):
-                port = app.get_param(config, "CameraPort")
-            if app.get_param(config, "CameraUsername"):
-                username = app.get_param(config, "CameraUsername")
-            if app.get_param(config, "CameraPassword"):
-                password = app.get_param(config, "CameraPassword")
-            if app.get_param(config, "PIDKp"):
-                kp = app.get_param(config, "PIDKp")
-            if app.get_param(config, "PIDKi"):
-                ki = app.get_param(config, "PIDKi")
-            if app.get_param(config, "PIDKd"):
-                kd = app.get_param(config, "PIDKd")
-            if app.get_param(config, "DeadZone"):
-                dead_zone = app.get_param(config, "DeadZone")
-            if app.get_param(config, "UpdateRateLimit"):
-                update_rate = app.get_param(config, "UpdateRateLimit")
-            if app.get_param(config, "MovementType"):
-                movement_type = app.get_param(config, "MovementType")
-            if app.get_param(config, "FollowTracker"):
-                follow_tracker = app.get_param(config, "FollowTracker")
-            if app.get_param(config, "FlipXMovement"):
-                flip_x = app.get_param(config, "FlipXMovement")
-            if app.get_param(config, "FlipYMovement"):
-                flip_y = app.get_param(config, "FlipYMovement")
-            if app.get_param(config, "ZoomIfAble"):
-                zoom_if_able = app.get_param(config, "ZoomIfAble")
-            if app.get_param(config, "SimulateVariableSpeed"):
-                simulate_variable_speed = app.get_param(config, "SimulateVariableSpeed")
-            if app.get_param(config, "MinimumCameraSpeed"):
-                minimum_camera_speed = app.get_param(config, "MinimumCameraSpeed")
-            if app.get_param(config, "DefaultPositionPreset"):
-                default_position_preset = app.get_param(config, "DefaultPositionPreset")
-            if app.get_param(config, "MoveToPositionAfterIdleSeconds"):
-                idle_seconds = app.get_param(config, "MoveToPositionAfterIdleSeconds")
+        # Flat yapıdan config'leri doğrudan çek
+        ip = app.get_param(config, "CameraIP") or "127.0.0.1"
+        port = app.get_param(config, "CameraPort") or 80
+        username = app.get_param(config, "CameraUsername") or "admin"
+        password = app.get_param(config, "CameraPassword") or "admin"
+        kp = app.get_param(config, "PIDKp") or 0.2
+        ki = app.get_param(config, "PIDKi") or 0.0
+        kd = app.get_param(config, "PIDKd") or 2.0
+        dead_zone = app.get_param(config, "DeadZone") or 50
+        update_rate = app.get_param(config, "UpdateRateLimit") or 100
+        movement_type = app.get_param(config, "MovementType") or "Follow"
+        follow_tracker = app.get_param(config, "FollowTracker") or True
+        flip_x = app.get_param(config, "FlipXMovement") or False
+        flip_y = app.get_param(config, "FlipYMovement") or True
+        zoom_if_able = app.get_param(config, "ZoomIfAble") or False
+        simulate_variable_speed = app.get_param(config, "SimulateVariableSpeed") or False
+        minimum_camera_speed = app.get_param(config, "MinimumCameraSpeed") or 0.05
+        default_position_preset = app.get_param(config, "DefaultPositionPreset") or ""
+        idle_seconds = app.get_param(config, "MoveToPositionAfterIdleSeconds") or 30
 
         camera = ONVIFWrapper(ip, port, username, password)
         camera.start_background_loop()
@@ -130,13 +97,13 @@ class PTZTracking(Capsule):
     def create_detection_tensor(self, detection_list):
         return np.array(detection_list, dtype=np.float32)
 
-    def track_with_pid(self, detections, image_shape):
+    def track_with_pid(self, detections, image_shape, target_idx):
         if len(detections["boxes"]) == 0:
             self.bootstrap["camera"].continuous_move(0, 0, 0, rate_limit_ms=0)
             return []
 
-        # Box formatı [x_mid, y_mid, w, h]
-        box = detections["boxes"][0]
+        # Hedeflenen box'ı al
+        box = detections["boxes"][target_idx]
         obj_cx, obj_cy, bw, bh = box[0], box[1], box[2], box[3]
 
         w, h = image_shape[1], image_shape[0]
@@ -165,9 +132,11 @@ class PTZTracking(Capsule):
         if abs(error_x) < self.bootstrap["dead_zone"] and abs(error_y) < self.bootstrap["dead_zone"]:
             speed_x, speed_y = 0, 0
 
-        # Zoom if able (örnek: sadece hata sıfırsa zoom yap)
+        # Zoom Logic (DÜZELTİLDİ: PID'den gelen speed_z kullanılıyor)
         if self.bootstrap["zoom_if_able"] and speed_x == 0 and speed_y == 0:
-            speed_z = 0.2  # sabit bir yakınlaştırma hızı
+            # Eğer zoom yeteneği varsa ve obje merkezdeyse, PID'den gelen zoom hızını uygula
+            # (Zoom PID'ini etkinleştirmek için error_z doldurulmalı, şu an basit tutuyoruz)
+            speed_z = speed_z if speed_z != 0 else 0.2 # Sabit hız veya PID çıktısı
         else:
             speed_z = 0.0
 
@@ -178,7 +147,7 @@ class PTZTracking(Capsule):
             rate_limit_ms=self.bootstrap["update_rate"],
             simulate_variable_speed=self.bootstrap["simulate_variable_speed"]
         )
-        return [detections["boxes"][0]]
+        return [detections["boxes"][target_idx]]
 
     def run(self):
         output_detections = []
@@ -193,7 +162,25 @@ class PTZTracking(Capsule):
             detection_tensor = self.create_detection_tensor(detection_list)
             detections = process_detections(image, detection_tensor)
 
-            tracked_boxes = self.track_with_pid(detections, frame_numpy.shape)
+            # --- Follow Tracker Mantığı (DÜZELTİLDİ) ---
+            target_idx = 0 # Varsayılan olarak ilk detection
+            if self.bootstrap["follow_tracker"] and self.bootstrap["current_tracker_id"]:
+                # Eğer önceden bir tracker_id varsa, onu listede bul
+                for i, det in enumerate(self.input_detections):
+                    if det.get("trackerID") == self.bootstrap["current_tracker_id"]:
+                        target_idx = i
+                        break
+                else:
+                    # Eğer tracker_id bulunamazsa, en yüksek confidence'a sahip olanı al
+                    target_idx = np.argmax(detections["scores"])
+                    self.bootstrap["current_tracker_id"] = self.input_detections[target_idx].get("trackerID")
+            else:
+                # Eğer follow_tracker kapalıysa, en yüksek confidence
+                target_idx = np.argmax(detections["scores"])
+                if self.bootstrap["follow_tracker"]:
+                    self.bootstrap["current_tracker_id"] = self.input_detections[target_idx].get("trackerID")
+
+            tracked_boxes = self.track_with_pid(detections, frame_numpy.shape, target_idx)
             seeking = len(tracked_boxes) > 0
 
             for box in tracked_boxes:
@@ -208,7 +195,7 @@ class PTZTracking(Capsule):
                         confidence=1.0,
                         classId=0,
                         classLabel="Tracked",
-                        trackerID=0,
+                        trackerID=self.bootstrap["current_tracker_id"],
                         imgUID=img_UID,
                         UUID=str(uuid.uuid4()),
                         source="",
@@ -216,6 +203,7 @@ class PTZTracking(Capsule):
                 )
         else:
             self.bootstrap["camera"].continuous_move(0, 0, 0, rate_limit_ms=0)
+            # Boşta kalma süresi ve Preset'e dönme mantığı buraya eklenebilir
 
         packageModel = build_ptz_tracking_response(
             context=self,
