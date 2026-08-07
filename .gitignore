@@ -1,0 +1,29 @@
+# Sanal Ortam (Virtual Environment)
+.venv/
+venv/
+env/
+
+# IDE ve Düzenleyici Ayarları
+.idea/
+.vscode/
+*.swp
+
+# Python Önbellek Dosyaları
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build ve Paketleme Kalıntıları (setup.py için kritik)
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# İşletim Sistemi Dosyaları
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Log ve Geçici Dosyalar
+*.log
+*.tmp
