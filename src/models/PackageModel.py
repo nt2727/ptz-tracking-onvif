@@ -77,7 +77,7 @@ class OutputSeeking(Output):
 # 1. PTZ Tracking Executor Configurations
 # ==========================================
 class ConfigCameraIP(Config):
-    name: Literal["CameraIP"] = "CameraIP"  # DÜZELTİLDİ!
+    name: Literal["CameraIP"] = "CameraIP"
     value: str = Field(default="127.0.0.1")
     type: Literal["string"] = "string"
     field: Literal["textInput"] = "textInput"
@@ -88,7 +88,7 @@ class ConfigCameraIP(Config):
 
 
 class ConfigCameraPort(Config):
-    name: Literal["CameraPort"] = "CameraPort"  # DÜZELTİLDİ!
+    name: Literal["CameraPort"] = "CameraPort"
     value: int = Field(default=80, ge=1, le=65535)
     type: Literal["integer"] = "integer"
     field: Literal["textInput"] = "textInput"
@@ -99,7 +99,7 @@ class ConfigCameraPort(Config):
 
 
 class ConfigCameraUsername(Config):
-    name: Literal["CameraUsername"] = "CameraUsername"  # DÜZELTİLDİ!
+    name: Literal["CameraUsername"] = "CameraUsername"
     value: str = Field(default="admin")
     type: Literal["string"] = "string"
     field: Literal["textInput"] = "textInput"
@@ -110,7 +110,7 @@ class ConfigCameraUsername(Config):
 
 
 class ConfigCameraPassword(Config):
-    name: Literal["CameraPassword"] = "CameraPassword"  # DÜZELTİLDİ!
+    name: Literal["CameraPassword"] = "CameraPassword"
     value: str = Field(default="admin")
     type: Literal["string"] = "string"
     field: Literal["password"] = "password"
@@ -121,7 +121,7 @@ class ConfigCameraPassword(Config):
 
 
 class ConfigPIDKp(Config):
-    name: Literal["PIDKp"] = "PIDKp"  # DÜZELTİLDİ!
+    name: Literal["PIDKp"] = "PIDKp"
     value: float = Field(default=0.2, ge=0, le=1)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
@@ -132,7 +132,7 @@ class ConfigPIDKp(Config):
 
 
 class ConfigPIDKi(Config):
-    name: Literal["PIDKi"] = "PIDKi"  # DÜZELTİLDİ!
+    name: Literal["PIDKi"] = "PIDKi"
     value: float = Field(default=0.0, ge=0, le=1)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
@@ -143,7 +143,7 @@ class ConfigPIDKi(Config):
 
 
 class ConfigPIDKd(Config):
-    name: Literal["PIDKd"] = "PIDKd"  # DÜZELTİLDİ!
+    name: Literal["PIDKd"] = "PIDKd"
     value: float = Field(default=2.0, ge=0, le=10)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
@@ -154,7 +154,7 @@ class ConfigPIDKd(Config):
 
 
 class ConfigDeadZone(Config):
-    name: Literal["DeadZone"] = "DeadZone"  # DÜZELTİLDİ!
+    name: Literal["DeadZone"] = "DeadZone"
     value: int = Field(default=50, ge=0, le=500)
     type: Literal["integer"] = "integer"
     field: Literal["textInput"] = "textInput"
@@ -165,7 +165,7 @@ class ConfigDeadZone(Config):
 
 
 class ConfigUpdateRateLimit(Config):
-    name: Literal["UpdateRateLimit"] = "UpdateRateLimit"  # DÜZELTİLDİ!
+    name: Literal["UpdateRateLimit"] = "UpdateRateLimit"
     value: int = Field(default=100, ge=10, le=1000)
     type: Literal["integer"] = "integer"
     field: Literal["textInput"] = "textInput"
@@ -176,7 +176,7 @@ class ConfigUpdateRateLimit(Config):
 
 
 class ConfigMovementType(Config):
-    name: Literal["MovementType"] = "MovementType"  # DÜZELTİLDİ!
+    name: Literal["MovementType"] = "MovementType"
     value: Literal["Follow", "GoToPreset"] = "Follow"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
@@ -187,7 +187,7 @@ class ConfigMovementType(Config):
 
 
 class ConfigFollowTracker(Config):
-    name: Literal["FollowTracker"] = "FollowTracker"  # DÜZELTİLDİ!
+    name: Literal["FollowTracker"] = "FollowTracker"
     value: bool = True
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
@@ -198,7 +198,7 @@ class ConfigFollowTracker(Config):
 
 
 class ConfigFlipXMovement(Config):
-    name: Literal["FlipXMovement"] = "FlipXMovement"  # DÜZELTİLDİ!
+    name: Literal["FlipXMovement"] = "FlipXMovement"
     value: bool = False
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
@@ -209,7 +209,7 @@ class ConfigFlipXMovement(Config):
 
 
 class ConfigFlipYMovement(Config):
-    name: Literal["FlipYMovement"] = "FlipYMovement"  # DÜZELTİLDİ!
+    name: Literal["FlipYMovement"] = "FlipYMovement"
     value: bool = True
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
@@ -220,7 +220,7 @@ class ConfigFlipYMovement(Config):
 
 
 class ConfigZoomIfAble(Config):
-    name: Literal["ZoomIfAble"] = "ZoomIfAble"  # DÜZELTİLDİ!
+    name: Literal["ZoomIfAble"] = "ZoomIfAble"
     value: bool = False
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
@@ -231,7 +231,7 @@ class ConfigZoomIfAble(Config):
 
 
 class ConfigSimulateVariableSpeed(Config):
-    name: Literal["SimulateVariableSpeed"] = "SimulateVariableSpeed"  # DÜZELTİLDİ!
+    name: Literal["SimulateVariableSpeed"] = "SimulateVariableSpeed"
     value: bool = False
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
@@ -242,7 +242,7 @@ class ConfigSimulateVariableSpeed(Config):
 
 
 class ConfigMinimumCameraSpeed(Config):
-    name: Literal["MinimumCameraSpeed"] = "MinimumCameraSpeed"  # DÜZELTİLDİ!
+    name: Literal["MinimumCameraSpeed"] = "MinimumCameraSpeed"
     value: float = Field(default=0.05, ge=0, le=1)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
@@ -253,7 +253,7 @@ class ConfigMinimumCameraSpeed(Config):
 
 
 class ConfigDefaultPositionPreset(Config):
-    name: Literal["DefaultPositionPreset"] = "DefaultPositionPreset"  # DÜZELTİLDİ!
+    name: Literal["DefaultPositionPreset"] = "DefaultPositionPreset"
     value: str = Field(default="")
     type: Literal["string"] = "string"
     field: Literal["textInput"] = "textInput"
@@ -264,7 +264,7 @@ class ConfigDefaultPositionPreset(Config):
 
 
 class ConfigMoveToPositionAfterIdleSeconds(Config):
-    name: Literal["MoveToPositionAfterIdleSeconds"] = "MoveToPositionAfterIdleSeconds"  # DÜZELTİLDİ!
+    name: Literal["MoveToPositionAfterIdleSeconds"] = "MoveToPositionAfterIdleSeconds"
     value: int = Field(default=30, ge=0)
     type: Literal["integer"] = "integer"
     field: Literal["textInput"] = "textInput"
@@ -275,7 +275,7 @@ class ConfigMoveToPositionAfterIdleSeconds(Config):
 
 
 # ==========================================
-# 2. ConfigPTZAdvance Toggle Yapısı (GERİ GETİRİLDİ)
+# 2. ConfigPTZAdvance Toggle Yapısı
 # ==========================================
 class ConfigPTZAdvanceTrue(Config):
     name: Literal["True"] = "True"
@@ -294,7 +294,7 @@ class ConfigPTZAdvanceTrue(Config):
     configMovementType: ConfigMovementType
     configFollowTracker: ConfigFollowTracker
     configFlipXMovement: ConfigFlipXMovement
-    configFlipYMovement: configFlipYMovement
+    configFlipYMovement: ConfigFlipYMovement  # DÜZELTİLDİ! (ConfigFlipYMovement idi)
     configZoomIfAble: ConfigZoomIfAble
     configSimulateVariableSpeed: ConfigSimulateVariableSpeed
     configMinimumCameraSpeed: ConfigMinimumCameraSpeed
@@ -316,7 +316,7 @@ class ConfigPTZAdvanceFalse(Config):
 
 
 class ConfigPTZAdvance(Config):
-    name: Literal["ConfigPTZAdvance"] = "ConfigPTZAdvance"  # UI için DOĞRU İSİM!
+    name: Literal["ConfigPTZAdvance"] = "ConfigPTZAdvance"
     value: Union[ConfigPTZAdvanceTrue, ConfigPTZAdvanceFalse]
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
@@ -328,7 +328,7 @@ class ConfigPTZAdvance(Config):
 
 
 class PTZTrackingConfigs(Configs):
-    configPTZAdvance: ConfigPTZAdvance  # Bu, UI'da "Advance" seçeneğini tetikleyecek
+    configPTZAdvance: ConfigPTZAdvance
 
 
 class PTZTrackingInputs(Inputs):
