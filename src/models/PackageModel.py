@@ -387,3 +387,13 @@ class ConfigExecutor(Config):
 
     class Config:
         title = "Task"
+
+# ==========================================
+# 3. Package Root Models (Eksik Olan Kısım)
+# ==========================================
+
+class PackageConfigs(Configs):
+    executor: ConfigExecutor
+
+class PackageModel(Package):
+    configs: PackageConfigs
