@@ -34,8 +34,8 @@ class PTZTrackingAuto(Capsule):
         app = Application()
         advance = app.get_param(config, "ConfigPTZAdvance")
 
-        # Default değerler
-        username, password = "admin", "admin"
+        # Default değerler (Advance False ise kullanılacak)
+        ip, port, username, password = "127.0.0.1", 80, "admin", "admin"
         kp, ki, kd = 0.2, 0.0, 2.0
         dead_zone, update_rate = 50, 100
         movement_type = "Follow"
@@ -48,41 +48,27 @@ class PTZTrackingAuto(Capsule):
         idle_seconds = 30
 
         if advance == "True":
-            # Güvenli ve tutarlı config okuma
-            if app.get_param(config, "CameraUsername"):
-                username = app.get_param(config, "CameraUsername")
-            if app.get_param(config, "CameraPassword"):
-                password = app.get_param(config, "CameraPassword")
-            if app.get_param(config, "PIDKp"):
-                kp = app.get_param(config, "PIDKp")
-            if app.get_param(config, "PIDKi"):
-                ki = app.get_param(config, "PIDKi")
-            if app.get_param(config, "PIDKd"):
-                kd = app.get_param(config, "PIDKd")
-            if app.get_param(config, "DeadZone"):
-                dead_zone = app.get_param(config, "DeadZone")
-            if app.get_param(config, "UpdateRateLimit"):
-                update_rate = app.get_param(config, "UpdateRateLimit")
-            if app.get_param(config, "MovementType"):
-                movement_type = app.get_param(config, "MovementType")
-            if app.get_param(config, "FollowTracker"):
-                follow_tracker = app.get_param(config, "FollowTracker")
-            if app.get_param(config, "FlipXMovement"):
-                flip_x = app.get_param(config, "FlipXMovement")
-            if app.get_param(config, "FlipYMovement"):
-                flip_y = app.get_param(config, "FlipYMovement")
-            if app.get_param(config, "ZoomIfAble"):
-                zoom_if_able = app.get_param(config, "ZoomIfAble")
-            if app.get_param(config, "SimulateVariableSpeed"):
-                simulate_variable_speed = app.get_param(config, "SimulateVariableSpeed")
-            if app.get_param(config, "MinimumCameraSpeed"):
-                minimum_camera_speed = app.get_param(config, "MinimumCameraSpeed")
-            if app.get_param(config, "DefaultPositionPreset"):
-                default_position_preset = app.get_param(config, "DefaultPositionPreset")
-            if app.get_param(config, "MoveToPositionAfterIdleSeconds"):
-                idle_seconds = app.get_param(config, "MoveToPositionAfterIdleSeconds")
+            # Eğer Advance açıksa, UI'dan gelen parametreleri al
+            ip = app.get_param(config, "CameraIP") or ip
+            port = app.get_param(config, "CameraPort") or port
+            username = app.get_param(config, "CameraUsername") or username
+            password = app.get_param(config, "CameraPassword") or password
+            kp = app.get_param(config, "PIDKp") or kp
+            ki = app.get_param(config, "PIDKi") or ki
+            kd = app.get_param(config, "PIDKd") or kd
+            dead_zone = app.get_param(config, "DeadZone") or dead_zone
+            update_rate = app.get_param(config, "UpdateRateLimit") or update_rate
+            movement_type = app.get_param(config, "MovementType") or movement_type
+            follow_tracker = app.get_param(config, "FollowTracker") or follow_tracker
+            flip_x = app.get_param(config, "FlipXMovement") or flip_x
+            flip_y = app.get_param(config, "FlipYMovement") or flip_y
+            zoom_if_able = app.get_param(config, "ZoomIfAble") or zoom_if_able
+            simulate_variable_speed = app.get_param(config, "SimulateVariableSpeed") or simulate_variable_speed
+            minimum_camera_speed = app.get_param(config, "MinimumCameraSpeed") or minimum_camera_speed
+            default_position_preset = app.get_param(config, "DefaultPositionPreset") or default_position_preset
+            idle_seconds = app.get_param(config, "MoveToPositionAfterIdleSeconds") or idle_seconds
 
-        # AĞDA KAMERA BULMA MANTIĞI
+        # AĞDA KAMERA BULMA MANTIĞI (OTOMATİK EXECUTOR FARKI)
         print("[PTZTrackingAuto] Ağda ONVIF kamera aranıyor...")
         devices = ONVIFWrapper.discover_cameras(timeout=5, username=username, password=password)
         if not devices:
@@ -140,6 +126,7 @@ class PTZTrackingAuto(Capsule):
             self.bootstrap["camera"].continuous_move(0, 0, 0, rate_limit_ms=0)
             return []
 
+        # Box formatı [x_mid, y_mid, w, h]
         box = detections["boxes"][0]
         obj_cx, obj_cy, bw, bh = box[0], box[1], box[2], box[3]
 
@@ -169,9 +156,9 @@ class PTZTrackingAuto(Capsule):
         if abs(error_x) < self.bootstrap["dead_zone"] and abs(error_y) < self.bootstrap["dead_zone"]:
             speed_x, speed_y = 0, 0
 
-        # Zoom if able
+        # Zoom Logic
         if self.bootstrap["zoom_if_able"] and speed_x == 0 and speed_y == 0:
-            speed_z = 0.2
+            speed_z = speed_z if speed_z != 0 else 0.2
         else:
             speed_z = 0.0
 
@@ -212,7 +199,7 @@ class PTZTrackingAuto(Capsule):
                         confidence=1.0,
                         classId=0,
                         classLabel="Tracked",
-                        trackerID=0,
+                        trackerID=0, # Otomatik modda tracker ID yok
                         imgUID=img_UID,
                         UUID=str(uuid.uuid4()),
                         source="",

@@ -32,26 +32,41 @@ class PTZTracking(Capsule):
     @staticmethod
     def bootstrap(config: dict) -> dict:
         app = Application()
+        advance = app.get_param(config, "ConfigPTZAdvance")
 
-        # Flat yapıdan config'leri doğrudan çek
-        ip = app.get_param(config, "CameraIP") or "127.0.0.1"
-        port = app.get_param(config, "CameraPort") or 80
-        username = app.get_param(config, "CameraUsername") or "admin"
-        password = app.get_param(config, "CameraPassword") or "admin"
-        kp = app.get_param(config, "PIDKp") or 0.2
-        ki = app.get_param(config, "PIDKi") or 0.0
-        kd = app.get_param(config, "PIDKd") or 2.0
-        dead_zone = app.get_param(config, "DeadZone") or 50
-        update_rate = app.get_param(config, "UpdateRateLimit") or 100
-        movement_type = app.get_param(config, "MovementType") or "Follow"
-        follow_tracker = app.get_param(config, "FollowTracker") or True
-        flip_x = app.get_param(config, "FlipXMovement") or False
-        flip_y = app.get_param(config, "FlipYMovement") or True
-        zoom_if_able = app.get_param(config, "ZoomIfAble") or False
-        simulate_variable_speed = app.get_param(config, "SimulateVariableSpeed") or False
-        minimum_camera_speed = app.get_param(config, "MinimumCameraSpeed") or 0.05
-        default_position_preset = app.get_param(config, "DefaultPositionPreset") or ""
-        idle_seconds = app.get_param(config, "MoveToPositionAfterIdleSeconds") or 30
+        # Default değerler (Advance False ise kullanılacak)
+        ip, port, username, password = "127.0.0.1", 80, "admin", "admin"
+        kp, ki, kd = 0.2, 0.0, 2.0
+        dead_zone, update_rate = 50, 100
+        movement_type = "Follow"
+        follow_tracker = True
+        flip_x, flip_y = False, True
+        zoom_if_able = False
+        simulate_variable_speed = False
+        minimum_camera_speed = 0.05
+        default_position_preset = ""
+        idle_seconds = 30
+
+        if advance == "True":
+            # Eğer Advance açıksa, UI'dan gelen parametreleri al
+            ip = app.get_param(config, "CameraIP") or ip
+            port = app.get_param(config, "CameraPort") or port
+            username = app.get_param(config, "CameraUsername") or username
+            password = app.get_param(config, "CameraPassword") or password
+            kp = app.get_param(config, "PIDKp") or kp
+            ki = app.get_param(config, "PIDKi") or ki
+            kd = app.get_param(config, "PIDKd") or kd
+            dead_zone = app.get_param(config, "DeadZone") or dead_zone
+            update_rate = app.get_param(config, "UpdateRateLimit") or update_rate
+            movement_type = app.get_param(config, "MovementType") or movement_type
+            follow_tracker = app.get_param(config, "FollowTracker") or follow_tracker
+            flip_x = app.get_param(config, "FlipXMovement") or flip_x
+            flip_y = app.get_param(config, "FlipYMovement") or flip_y
+            zoom_if_able = app.get_param(config, "ZoomIfAble") or zoom_if_able
+            simulate_variable_speed = app.get_param(config, "SimulateVariableSpeed") or simulate_variable_speed
+            minimum_camera_speed = app.get_param(config, "MinimumCameraSpeed") or minimum_camera_speed
+            default_position_preset = app.get_param(config, "DefaultPositionPreset") or default_position_preset
+            idle_seconds = app.get_param(config, "MoveToPositionAfterIdleSeconds") or idle_seconds
 
         camera = ONVIFWrapper(ip, port, username, password)
         camera.start_background_loop()
@@ -132,10 +147,8 @@ class PTZTracking(Capsule):
         if abs(error_x) < self.bootstrap["dead_zone"] and abs(error_y) < self.bootstrap["dead_zone"]:
             speed_x, speed_y = 0, 0
 
-        # Zoom Logic (DÜZELTİLDİ: PID'den gelen speed_z kullanılıyor)
+        # Zoom Logic
         if self.bootstrap["zoom_if_able"] and speed_x == 0 and speed_y == 0:
-            # Eğer zoom yeteneği varsa ve obje merkezdeyse, PID'den gelen zoom hızını uygula
-            # (Zoom PID'ini etkinleştirmek için error_z doldurulmalı, şu an basit tutuyoruz)
             speed_z = speed_z if speed_z != 0 else 0.2 # Sabit hız veya PID çıktısı
         else:
             speed_z = 0.0
@@ -162,7 +175,7 @@ class PTZTracking(Capsule):
             detection_tensor = self.create_detection_tensor(detection_list)
             detections = process_detections(image, detection_tensor)
 
-            # --- Follow Tracker Mantığı (DÜZELTİLDİ) ---
+            # --- Follow Tracker Mantığı ---
             target_idx = 0 # Varsayılan olarak ilk detection
             if self.bootstrap["follow_tracker"] and self.bootstrap["current_tracker_id"]:
                 # Eğer önceden bir tracker_id varsa, onu listede bul
@@ -203,7 +216,6 @@ class PTZTracking(Capsule):
                 )
         else:
             self.bootstrap["camera"].continuous_move(0, 0, 0, rate_limit_ms=0)
-            # Boşta kalma süresi ve Preset'e dönme mantığı buraya eklenebilir
 
         packageModel = build_ptz_tracking_response(
             context=self,
