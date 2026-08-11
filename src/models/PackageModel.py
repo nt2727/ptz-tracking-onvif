@@ -1,4 +1,4 @@
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from typing import List, Optional, Union, Literal
 
 from sdks.novavision.src.base.model import Package, Configs, Outputs, Inputs, \
@@ -10,19 +10,23 @@ class InputImage(Input):
     value: Union[List[Image], Image]
     type: str = "object"
 
-    @validator("type", pre=True, always=True)
-    def set_type_based_on_value(cls, value, values):
-        value = values.get('value')
-        if isinstance(value, Image):
-            return "object"
-        elif isinstance(value, list):
-            return "list"
+    @field_validator("type", mode="before")
+    @classmethod
+    def set_type_based_on_value(cls, value, info):
+        values = info.data
+        if 'value' in values:
+            val = values.get('value')
+            if isinstance(val, Image):
+                return "object"
+            elif isinstance(val, list):
+                return "list"
+        return value
 
     class Config:
         title = "Image"
 
 
-class Detection(Detection):
+class CustomDetection(Detection):
     imgUID: Optional[str] = None
     trackerID: Optional[Union[List, int]] = None
     UUID: Optional[str] = ""
@@ -31,7 +35,7 @@ class Detection(Detection):
 
 class InputDetections(Input):
     name: Literal["inputDetections"] = "inputDetections"
-    value: List
+    value: List[CustomDetection]
     type: Literal["list"] = "list"
 
     class Config:
@@ -43,13 +47,17 @@ class OutputImage(Output):
     value: Union[List[Image], Image]
     type: str = "object"
 
-    @validator("type", pre=True, always=True)
-    def set_type_based_on_value(cls, value, values):
-        value = values.get('value')
-        if isinstance(value, Image):
-            return "object"
-        elif isinstance(value, list):
-            return "list"
+    @field_validator("type", mode="before")
+    @classmethod
+    def set_type_based_on_value(cls, value, info):
+        values = info.data
+        if 'value' in values:
+            val = values.get('value')
+            if isinstance(val, Image):
+                return "object"
+            elif isinstance(val, list):
+                return "list"
+        return value
 
     class Config:
         title = "Image"
@@ -275,31 +283,33 @@ class ConfigMoveToPositionAfterIdleSeconds(Config):
 
 
 # ==========================================
-# 2. ConfigPTZAdvance Toggle Yapısı
+# 2. ConfigPTZAdvance Toggle
 # ==========================================
 class ConfigPTZAdvanceTrue(Config):
     name: Literal["True"] = "True"
     value: Literal["True"] = "True"
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
-    configCameraIP: ConfigCameraIP
-    configCameraPort: ConfigCameraPort
-    configCameraUsername: ConfigCameraUsername
-    configCameraPassword: ConfigCameraPassword
-    configPIDKp: ConfigPIDKp
-    configPIDKi: ConfigPIDKi
-    configPIDKd: ConfigPIDKd
-    configDeadZone: ConfigDeadZone
-    configUpdateRateLimit: ConfigUpdateRateLimit
-    configMovementType: ConfigMovementType
-    configFollowTracker: ConfigFollowTracker
-    configFlipXMovement: ConfigFlipXMovement
-    configFlipYMovement: ConfigFlipYMovement  # DÜZELTİLDİ! (ConfigFlipYMovement idi)
-    configZoomIfAble: ConfigZoomIfAble
-    configSimulateVariableSpeed: ConfigSimulateVariableSpeed
-    configMinimumCameraSpeed: ConfigMinimumCameraSpeed
-    configDefaultPositionPreset: ConfigDefaultPositionPreset
-    configMoveToPositionAfterIdleSeconds: ConfigMoveToPositionAfterIdleSeconds
+
+    configCameraIP: ConfigCameraIP = Field(default_factory=ConfigCameraIP)
+    configCameraPort: ConfigCameraPort = Field(default_factory=ConfigCameraPort)
+    configCameraUsername: ConfigCameraUsername = Field(default_factory=ConfigCameraUsername)
+    configCameraPassword: ConfigCameraPassword = Field(default_factory=ConfigCameraPassword)
+    configPIDKp: ConfigPIDKp = Field(default_factory=ConfigPIDKp)
+    configPIDKi: ConfigPIDKi = Field(default_factory=ConfigPIDKi)
+    configPIDKd: ConfigPIDKd = Field(default_factory=ConfigPIDKd)
+    configDeadZone: ConfigDeadZone = Field(default_factory=ConfigDeadZone)
+    configUpdateRateLimit: ConfigUpdateRateLimit = Field(default_factory=ConfigUpdateRateLimit)
+    configMovementType: ConfigMovementType = Field(default_factory=ConfigMovementType)
+    configFollowTracker: ConfigFollowTracker = Field(default_factory=ConfigFollowTracker)
+    configFlipXMovement: ConfigFlipXMovement = Field(default_factory=ConfigFlipXMovement)
+    configFlipYMovement: ConfigFlipYMovement = Field(default_factory=ConfigFlipYMovement)
+    configZoomIfAble: ConfigZoomIfAble = Field(default_factory=ConfigZoomIfAble)
+    configSimulateVariableSpeed: ConfigSimulateVariableSpeed = Field(default_factory=ConfigSimulateVariableSpeed)
+    configMinimumCameraSpeed: ConfigMinimumCameraSpeed = Field(default_factory=ConfigMinimumCameraSpeed)
+    configDefaultPositionPreset: ConfigDefaultPositionPreset = Field(default_factory=ConfigDefaultPositionPreset)
+    configMoveToPositionAfterIdleSeconds: ConfigMoveToPositionAfterIdleSeconds = Field(
+        default_factory=ConfigMoveToPositionAfterIdleSeconds)
 
     class Config:
         title = "Enable Advanced Settings"
@@ -317,7 +327,7 @@ class ConfigPTZAdvanceFalse(Config):
 
 class ConfigPTZAdvance(Config):
     name: Literal["ConfigPTZAdvance"] = "ConfigPTZAdvance"
-    value: Union[ConfigPTZAdvanceTrue, ConfigPTZAdvanceFalse]
+    value: Union[ConfigPTZAdvanceTrue, ConfigPTZAdvanceFalse] = Field(default_factory=ConfigPTZAdvanceFalse)
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
     restart: Literal[True] = True
@@ -328,7 +338,7 @@ class ConfigPTZAdvance(Config):
 
 
 class PTZTrackingConfigs(Configs):
-    configPTZAdvance: ConfigPTZAdvance
+    configPTZAdvance: ConfigPTZAdvance = Field(default_factory=ConfigPTZAdvance)
 
 
 class PTZTrackingInputs(Inputs):
@@ -378,7 +388,7 @@ class PTZTrackingAutoExecutor(Config):
 
 class ConfigExecutor(Config):
     name: Literal["ConfigExecutor"] = "ConfigExecutor"
-    value: Union[PTZTrackingExecutor, PTZTrackingAutoExecutor]
+    value: Union[PTZTrackingExecutor, PTZTrackingAutoExecutor] = Field(default_factory=PTZTrackingExecutor)
     type: Literal["executor"] = "executor"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
 
@@ -390,7 +400,7 @@ class ConfigExecutor(Config):
 # 3. Global Package Configuration
 # ==========================================
 class PackageConfigs(Configs):
-    executor: ConfigExecutor
+    executor: ConfigExecutor = Field(default_factory=ConfigExecutor)
 
 
 class PackageModel(Package):
