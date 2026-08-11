@@ -32,41 +32,29 @@ class PTZTracking(Capsule):
     @staticmethod
     def bootstrap(config: dict) -> dict:
         app = Application()
-        advance = app.get_param(config, "ConfigPTZAdvance")
 
-        # Default değerler (Advance False ise kullanılacak)
-        ip, port, username, password = "127.0.0.1", 80, "admin", "admin"
-        kp, ki, kd = 0.2, 0.0, 2.0
-        dead_zone, update_rate = 50, 100
-        movement_type = "Follow"
-        follow_tracker = True
-        flip_x, flip_y = False, True
-        zoom_if_able = False
-        simulate_variable_speed = False
-        minimum_camera_speed = 0.05
-        default_position_preset = ""
-        idle_seconds = 30
+        def safe_get(name, default):
+            val = app.get_param(config, name)
+            return val if val is not None else default
 
-        if advance == "True":
-            # Eğer Advance açıksa, UI'dan gelen parametreleri al
-            ip = app.get_param(config, "CameraIP") or ip
-            port = app.get_param(config, "CameraPort") or port
-            username = app.get_param(config, "CameraUsername") or username
-            password = app.get_param(config, "CameraPassword") or password
-            kp = app.get_param(config, "PIDKp") or kp
-            ki = app.get_param(config, "PIDKi") or ki
-            kd = app.get_param(config, "PIDKd") or kd
-            dead_zone = app.get_param(config, "DeadZone") or dead_zone
-            update_rate = app.get_param(config, "UpdateRateLimit") or update_rate
-            movement_type = app.get_param(config, "MovementType") or movement_type
-            follow_tracker = app.get_param(config, "FollowTracker") or follow_tracker
-            flip_x = app.get_param(config, "FlipXMovement") or flip_x
-            flip_y = app.get_param(config, "FlipYMovement") or flip_y
-            zoom_if_able = app.get_param(config, "ZoomIfAble") or zoom_if_able
-            simulate_variable_speed = app.get_param(config, "SimulateVariableSpeed") or simulate_variable_speed
-            minimum_camera_speed = app.get_param(config, "MinimumCameraSpeed") or minimum_camera_speed
-            default_position_preset = app.get_param(config, "DefaultPositionPreset") or default_position_preset
-            idle_seconds = app.get_param(config, "MoveToPositionAfterIdleSeconds") or idle_seconds
+        ip = safe_get("CameraIP", "127.0.0.1")
+        port = safe_get("CameraPort", 80)
+        username = safe_get("CameraUsername", "admin")
+        password = safe_get("CameraPassword", "admin")
+        kp = safe_get("PIDKp", 0.2)
+        ki = safe_get("PIDKi", 0.0)
+        kd = safe_get("PIDKd", 2.0)
+        dead_zone = safe_get("DeadZone", 50)
+        update_rate = safe_get("UpdateRateLimit", 100)
+        movement_type = safe_get("MovementType", "Follow")
+        follow_tracker = safe_get("FollowTracker", True)
+        flip_x = safe_get("FlipXMovement", False)
+        flip_y = safe_get("FlipYMovement", True)
+        zoom_if_able = safe_get("ZoomIfAble", False)
+        simulate_variable_speed = safe_get("SimulateVariableSpeed", False)
+        minimum_camera_speed = safe_get("MinimumCameraSpeed", 0.05)
+        default_position_preset = safe_get("DefaultPositionPreset", "")
+        idle_seconds = safe_get("MoveToPositionAfterIdleSeconds", 30)
 
         camera = ONVIFWrapper(ip, port, username, password)
         camera.start_background_loop()

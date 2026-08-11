@@ -58,10 +58,9 @@ def inference():
 
     inputDetections = InputDetections(value=[detection1])
 
-    # 3. Configurations Oluştur (Advanced True)
-    # IP kısmına "127.0.0.1" veya Docker içindeyse "host.docker.internal" yazılabilir.
-    config_advance = ConfigPTZAdvanceTrue(
-        configCameraIP=ConfigCameraIP(value="127.0.0.1"),  # ODM IP'si
+    # 3. Configurations Oluştur (Flat yapıya uygun)
+    ptzConfigs = PTZTrackingConfigs(
+        configCameraIP=ConfigCameraIP(value="127.0.0.1"),
         configCameraPort=ConfigCameraPort(value=80),
         configCameraUsername=ConfigCameraUsername(value="admin"),
         configCameraPassword=ConfigCameraPassword(value="admin"),
@@ -70,10 +69,8 @@ def inference():
         configPIDKd=ConfigPIDKd(value=2.0),
         configDeadZone=ConfigDeadZone(value=50),
         configUpdateRateLimit=ConfigUpdateRateLimit(value=100)
-        # Diğer config'ler (Flip, Zoom vb.) isteğe bağlı eklenebilir
     )
 
-    ptzConfigs = PTZTrackingConfigs(configPTZAdvance=ConfigPTZAdvance(value=config_advance))
     ptzInputs = PTZTrackingInputs(inputImage=inputImage, inputDetections=inputDetections)
     ptzRequest = PTZTrackingRequest(inputs=ptzInputs, configs=ptzConfigs)
 
