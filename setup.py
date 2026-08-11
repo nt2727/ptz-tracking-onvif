@@ -1,6 +1,6 @@
-import setuptools
+from setuptools import setup, find_packages
 
-setuptools.setup(
+setup(
     name="novavision-cap-ptz-tracking-onvif",
     version="0.0.1",
     author="DigiNova",
@@ -9,22 +9,18 @@ setuptools.setup(
     url='https://github.com/novavision-ai/lib-onvif-ptz',
     license='MIT',
     install_requires=[
-        'numpy',
-        'onvif-zeep-f',
-        'simple-pid',
+        'numpy>=1.21.0',           # Matris işlemleri için
+        'opencv-python>=4.5.0',    # Görüntü işleme için
+        'onvif-zeep-f>=1.0.0',     # ONVIF bağlantısı için (Kritik!)
+        'simple-pid>=1.0.0',       # PID kontrolcüsü için
+        'pydantic>=1.8.0',         # Model validasyonu için
+        'requests>=2.25.0'         # API istekleri için
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    packages=[
-        'novavision.cap.ptz-tracking-onvif',
-        'novavision.cap.ptz-tracking-onvif.classes',
-        'novavision.cap.ptz-tracking-onvif.executors',
-        'novavision.cap.ptz-tracking-onvif.models',
-        'novavision.cap.ptz-tracking-onvif.utils',
-    ],
-    package_dir={'novavision.cap.ptz-tracking-onvif': 'src'},
+    packages=find_packages(where="."),
     python_requires=">=3.6"
 )
