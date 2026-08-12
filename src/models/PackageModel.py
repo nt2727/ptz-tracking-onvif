@@ -2,23 +2,14 @@ from pydantic import Field, validator
 from typing import List, Optional, Union, Literal
 
 from sdks.novavision.src.base.model import Package, Configs, Outputs, Inputs, \
-    Response, Request, Output, Input, Config, Detection, BoundingBox, Image
+    Response, Request, Output, Input, Config, Detection, BoundingBox, Image, Images  # <-- Images eklendi
 
 
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
-    value: Union[List[Image], Image]
-    type: str = "object"
-
-    @validator("type", pre=True, always=True)
-    def set_type_based_on_value(cls, value, values):
-        val = values.get('value')
-        if isinstance(val, Image):
-            return "object"
-        elif isinstance(val, list):
-            return "list"
-        return value
-
+    value: Images  # <-- Images olarak değiştir
+    type: Literal["Images"] = "Images"  # <-- Literal yap
+    field: Literal["img"] = "img"  # <-- field eklendi (opsiyonel ama şartnameye uygun)
     class Config:
         title = "Image"
 
@@ -34,25 +25,15 @@ class InputDetections(Input):
     name: Literal["inputDetections"] = "inputDetections"
     value: List[CustomDetection]
     type: Literal["list"] = "list"
-
     class Config:
         title = "Detections"
 
 
 class OutputImage(Output):
     name: Literal["outputImage"] = "outputImage"
-    value: Union[List[Image], Image]
-    type: str = "object"
-
-    @validator("type", pre=True, always=True)
-    def set_type_based_on_value(cls, value, values):
-        val = values.get('value')
-        if isinstance(val, Image):
-            return "object"
-        elif isinstance(val, list):
-            return "list"
-        return value
-
+    value: Images  # <-- Images olarak değiştir
+    type: Literal["Images"] = "Images"  # <-- Literal yap
+    field: Literal["img"] = "img"  # <-- field eklendi
     class Config:
         title = "Image"
 
@@ -61,7 +42,6 @@ class OutputDetections(Output):
     name: Literal["outputDetections"] = "outputDetections"
     value: list
     type: Literal["list"] = "list"
-
     class Config:
         title = "Detections"
 
@@ -70,7 +50,6 @@ class OutputSeeking(Output):
     name: Literal["outputSeeking"] = "outputSeeking"
     value: bool
     type: Literal["boolean"] = "boolean"
-
     class Config:
         title = "Seeking Status"
 
@@ -283,7 +262,7 @@ class ConfigPTZAdvance(Config):
     value: Union[ConfigPTZAdvanceTrue, ConfigPTZAdvanceFalse]
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    restart: Literal[True] = True
+    # restart: Literal[True] = True   # <-- Bu satır silindi
     class Config:
         title = "Advance"
         json_schema_extra = {"shortDescription": "Advanced Settings"}
