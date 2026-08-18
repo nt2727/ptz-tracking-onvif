@@ -4,6 +4,7 @@ from capsules.PTZTracking.src.models.PackageModel import (
     PackageConfigs,
     PTZTrackingResponse,
     PTZTrackingExecutor,
+    PTZTrackingAutoExecutor,
     ConfigExecutor,
     PTZTrackingOutputs,
     OutputDetections,
@@ -12,7 +13,13 @@ from capsules.PTZTracking.src.models.PackageModel import (
 )
 
 
-def build_ptz_tracking_response(context, output_detections, seeking, output_image):
+def build_ptz_tracking_response(
+    context,
+    output_detections,
+    seeking,
+    output_image,
+    executor_type="PTZTracking",
+):
     outputDetections = OutputDetections(value=output_detections)
     outputSeeking = OutputSeeking(value=seeking)
     outputImage = OutputImage(value=output_image)
@@ -24,7 +31,12 @@ def build_ptz_tracking_response(context, output_detections, seeking, output_imag
     )
 
     ptzResponse = PTZTrackingResponse(outputs=ptzOutputs)
-    ptzExecutor = PTZTrackingExecutor(value=ptzResponse)
+    executor_class = (
+        PTZTrackingAutoExecutor
+        if executor_type == "PTZTrackingAuto"
+        else PTZTrackingExecutor
+    )
+    ptzExecutor = executor_class(value=ptzResponse)
 
     executor = ConfigExecutor(value=ptzExecutor)
     packageConfigs = PackageConfigs(executor=executor)

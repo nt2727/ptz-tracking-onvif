@@ -25,6 +25,7 @@ class InputDetections(Input):
     name: Literal["inputDetections"] = "inputDetections"
     value: List[CustomDetection]
     type: Literal["list"] = "list"
+    field: Literal["detections"] = "detections"
     class Config:
         title = "Detections"
 
@@ -42,6 +43,7 @@ class OutputDetections(Output):
     name: Literal["outputDetections"] = "outputDetections"
     value: list
     type: Literal["list"] = "list"
+    field: Literal["detections"] = "detections"
     class Config:
         title = "Detections"
 
@@ -50,6 +52,7 @@ class OutputSeeking(Output):
     name: Literal["outputSeeking"] = "outputSeeking"
     value: bool
     type: Literal["boolean"] = "boolean"
+    field: Literal["boolean"] = "boolean"
     class Config:
         title = "Seeking Status"
 
@@ -284,7 +287,9 @@ class PTZTrackingOutputs(Outputs):
 
 
 class PTZTrackingRequest(Request):
-    inputs: Optional[PTZTrackingInputs] = None
+    # Portların flow editöründe üretilebilmesi için input sözleşmesi isteğe
+    # bağlı olmamalıdır. Optional bir inputs alanı UI tarafından boş kabul edilir.
+    inputs: PTZTrackingInputs
     configs: PTZTrackingConfigs
     class Config:
         json_schema_extra = {"target": "configs"}

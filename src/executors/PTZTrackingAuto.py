@@ -198,7 +198,8 @@ class PTZTrackingAuto(Capsule):
                 context=self,
                 output_detections=[],
                 seeking=camera.seeking(),
-                output_image=output_image
+                output_image=output_image,
+                executor_type="PTZTrackingAuto",
             )
             return packageModel
 
@@ -252,7 +253,8 @@ class PTZTrackingAuto(Capsule):
             context=self,
             output_detections=output_detections,
             seeking=seeking,
-            output_image=output_image
+            output_image=output_image,
+            executor_type="PTZTrackingAuto",
         )
         return packageModel
 
