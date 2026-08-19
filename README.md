@@ -1,83 +1,69 @@
-# PTZ Tracking (ONVIF) — NovaVision Capsule
+# PTZ Tracking (ONVIF)
 
-ONVIF uyumlu PTZ (Pan-Tilt-Zoom) kameralar için PID tabanlı otomatik nesne takibi
-capsule'ü. Üst akıştan (object detection / tracker) gelen `Detection` listesine
-göre kamerayı hedefi kare merkezinde tutacak şekilde hareket ettirir.
+PID-based object tracking for ONVIF-compatible PTZ (Pan-Tilt-Zoom) cameras. The package receives detections from an upstream object detector or tracker and moves the camera to keep the selected target near the centre of the frame.
 
-## İki Executor
+## Executors
 
-Bu capsule iki ayrı executor içerir; her ikisi de aynı `PackageModel` şemasını
-ve aynı PID/ONVIF mantığını paylaşır, sadece kameraya **nasıl bağlanıldığı**
-farklıdır:
+Two executors share the same data model and tracking logic:
 
-- **`PTZTracking`** (manuel): `CameraIP`, `CameraPort`, `CameraUsername`,
-  `CameraPassword` config'leri ile doğrudan belirtilen IP'ye bağlanır.
-  Kameranın IP'sini biliyorsanız (çoğu durumda önerilen yöntem) bunu kullanın.
-- **`PTZTrackingAuto`** (otomatik): Bağlanmadan önce ağda WS-Discovery ile
-  ONVIF kamera arar, bulduğu ilk cihaza bağlanır. WS-Discovery'nin çalışması
-  için `onvif` kütüphanesinin `onvif.util.discover` fonksiyonunu desteklemesi
-  ve kameranın aynı subnet'te / multicast'e açık olması gerekir. Kamera NAT
-  arkasındaysa veya üretici bulut eklentisi ONVIF'i gizliyorsa (bazı Tapo/TP-Link
-  modellerinde olduğu gibi) otomatik keşif başarısız olabilir; bu durumda
-  `PTZTracking` (manuel) executor'ü kullanın.
+- `PTZTracking` connects directly to a camera using its IP address, port, username, and password. Use this when the camera address is known.
+- `PTZTrackingAuto` discovers ONVIF cameras on the local network through WS-Discovery and connects to the first available device. Discovery requires multicast access and may not work across NAT, separate subnets, or on cameras that hide their ONVIF service.
 
-## Hareket Modları (`MovementType`)
+## Movement modes
 
-- **`Follow`**: `inputDetections` içindeki hedefi (varsayılan: en yüksek
-  confidence, `FollowTracker=true` ise sabit `trackerID`) PID kontrolcüsüyle
-  sürekli takip eder.
-- **`GoToPreset`**: Detection akışından bağımsız olarak kamerayı
-  `DefaultPositionPreset` adlı önceden tanımlı preset pozisyonuna götürür.
+- `Follow` selects a detection (by default, the one with the highest confidence) and continuously tracks it with PID control. When tracker following is enabled, it follows the configured `trackerID`.
+- `GoToPreset` moves the camera to the preconfigured `DefaultPositionPreset` without using detections.
 
-`Follow` modunda, `MoveToPositionAfterIdleSeconds` saniye boyunca hiç detection
-gelmezse kamera otomatik olarak `DefaultPositionPreset`'e döner (idle reset).
+In `Follow` mode, the camera returns to `DefaultPositionPreset` if no detection is received for `MoveToPositionAfterIdleSeconds`.
 
-## Kurulum
+## Installation
+
+The project depends on the NovaVision SDK, which is maintained separately.
 
 ```bash
-# NovaVision SDK (ayrı repo, PyPI'de değil)
 pip install git+https://github.com/novavision-ai/sdk.git
-# veya lokal geliştirmede: pip install -e ../sdk
-
 pip install -e .
 ```
 
-`setup.py` içindeki bağımlılıklar: `numpy`, `opencv-python`, `onvif-zeep-async`
-(kod async API kullanır), `simple-pid`, `pydantic<2`, `requests`.
-
-## Konfigürasyon Notları
-
-- **Varsayılan kimlik bilgileri**: `apps/` altındaki örnekler kolaylık için
-  `admin/admin` kullanır. **Üretimde bu asla kullanılmamalı** — gerçek
-  kamera kullanıcı adı/şifresini `ConfigCameraUsername` / `ConfigCameraPassword`
-  ile mutlaka ayarlayın.
-- ONVIF servisleri (`ContinuousMove`, `GotoPreset`) kameranın desteklemesini
-  gerektirir; birçok tüketici kamerasında (ör. Tapo) ONVIF'in kamera
-  uygulamasından/arayüzünden ayrıca etkinleştirilmesi gerekir ve port
-  genelde `80` değil `2020`'dir — kameranızın kendi ONVIF portunu kontrol edin.
-
-## Klasör Yapısı
-
-```
-capsules/PTZTracking/
-├── apps/         # Örnek/manuel test scriptleri (inference, inference_auto, inference_sim, export)
-├── src/
-│   ├── classes/  # ONVIFWrapper, PIDController
-│   ├── executors/# PTZTracking (manuel), PTZTrackingAuto (WS-Discovery)
-│   ├── models/   # Pydantic PackageModel şeması
-│   └── utils/    # yardımcı fonksiyonlar
-├── resources/    # test görüntüsü/videosu (repo'ya dahil değildir, eklenmelidir)
-├── notebooks/    # (opsiyonel) keşif/deney notebook'ları
-└── tests/        # birim testleri
-```
-
-## Test
+For local SDK development, install the SDK from its local checkout instead:
 
 ```bash
-pytest capsules/PTZTracking/tests -v
+pip install -e ../sdk
+pip install -e .
 ```
 
-Kamera olmadan çalışan birim testleri `PIDController` ve dead-zone/zoom
-mantığını kapsar. Gerçek bir ONVIF kamerayla entegrasyon testi için
-`capsules/PTZTracking/apps/inference.py` (manuel) veya `inference_auto.py`
-(otomatik keşif) örnek scriptlerini kullanın.
+## Configuration notes
+
+- Always use real camera credentials in production; never rely on sample or default credentials.
+- The camera must support the ONVIF operations used by this package, including `ContinuousMove` and `GotoPreset`.
+- Enable ONVIF in the camera settings if required by the manufacturer, and use the camera's documented ONVIF port.
+
+## Project layout
+
+```
+ptz-tracking-onvif/
+|-- src/
+|   |-- classes/
+|   |   |-- ONVIFWrapper.py       # ONVIF camera connection and PTZ commands
+|   |   `-- PIDController.py      # PID-based pan, tilt, and zoom control
+|   |-- executors/
+|   |   |-- PTZTracking.py        # Direct camera connection executor
+|   |   `-- PTZTrackingAuto.py    # WS-Discovery camera connection executor
+|   |-- models/
+|   |   `-- PackageModel.py       # Input, output, and configuration models
+|   `-- utils/
+|       |-- response.py           # Tracking response construction helpers
+|       `-- utils.py              # Detection processing and geometry helpers
+|-- setup.py                      # Package metadata and dependencies
+|-- requirement.txt               # Development dependency list
+|-- README.md                     # Project documentation
+`-- LICENSE
+```
+
+The distributable Python packages are:
+
+- `novavision.cap.ptz_tracking_onvif`
+- `novavision.cap.ptz_tracking_onvif.classes`
+- `novavision.cap.ptz_tracking_onvif.executors`
+- `novavision.cap.ptz_tracking_onvif.models`
+- `novavision.cap.ptz_tracking_onvif.utils`

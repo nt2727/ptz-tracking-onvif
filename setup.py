@@ -26,12 +26,9 @@ setuptools.setup(
     packages=[
         'novavision.cap.ptz_tracking_onvif',
         'novavision.cap.ptz_tracking_onvif.classes',
-        'novavision.cap.ptz_tracking_onvif.configs',
-        'novavision.cap.ptz_tracking_onvif.dataloaders',
         'novavision.cap.ptz_tracking_onvif.executors',
         'novavision.cap.ptz_tracking_onvif.models',
-        'novavision.cap.ptz_tracking_onvif.utils',
-        'novavision.cap.ptz_tracking_onvif.weights'
+        'novavision.cap.ptz_tracking_onvif.utils'
     ],
     package_dir={'novavision.cap.ptz_tracking_onvif': 'src'},
     python_requires=">=3.8"
