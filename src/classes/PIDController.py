@@ -4,14 +4,10 @@ from simple_pid import PID
 class PIDController:
 
     def __init__(self, kp: float, ki: float, kd: float):
-        # Pan (X) ekseni için PID
         self.pid_x = PID(kp, ki, kd, setpoint=0)
-        # Tilt (Y) ekseni için PID
         self.pid_y = PID(kp, ki, kd, setpoint=0)
-        # Zoom (Z) ekseni için PID
         self.pid_z = PID(kp, ki, kd, setpoint=0)
 
-        # PID çıktılarını -1.0 ile 1.0 arasına sınırla (Kamera normalize hız değerleri)
         self.pid_x.output_limits = (-1, 1)
         self.pid_y.output_limits = (-1, 1)
         self.pid_z.output_limits = (-1, 1)

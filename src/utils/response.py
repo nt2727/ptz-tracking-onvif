@@ -9,7 +9,7 @@ from capsules.PTZTracking.src.models.PackageModel import (
     PTZTrackingOutputs,
     OutputDetections,
     OutputSeeking,
-    OutputImage,  # Artık PackageModel'de tanımlandığı için sorunsuz import!
+    OutputImage,
 )
 
 

@@ -7,9 +7,9 @@ from sdks.novavision.src.base.model import Package, Configs, Outputs, Inputs, \
 
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
-    value: Images  # <-- Images olarak değiştir
-    type: Literal["Images"] = "Images"  # <-- Literal yap
-    field: Literal["img"] = "img"  # <-- field eklendi (opsiyonel ama şartnameye uygun)
+    value: Images
+    type: Literal["Images"] = "Images"
+    field: Literal["img"] = "img"
     class Config:
         title = "Image"
 
@@ -287,8 +287,6 @@ class PTZTrackingOutputs(Outputs):
 
 
 class PTZTrackingRequest(Request):
-    # Portların flow editöründe üretilebilmesi için input sözleşmesi isteğe
-    # bağlı olmamalıdır. Optional bir inputs alanı UI tarafından boş kabul edilir.
     inputs: PTZTrackingInputs
     configs: PTZTrackingConfigs
     class Config:

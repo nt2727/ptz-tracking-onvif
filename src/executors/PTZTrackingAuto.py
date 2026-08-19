@@ -43,9 +43,9 @@ class PTZTrackingAuto(Capsule):
         password = safe_get("CameraPassword", "admin")
         if username == "admin" and password == "admin":
             print(
-                "[UYARI] Kamera kimlik bilgileri varsayilan (admin/admin) olarak "
-                "kaldi. Uretimde ConfigCameraUsername/ConfigCameraPassword ile "
-                "gercek kimlik bilgilerini mutlaka ayarlayin."
+                "[WARNING] Camera credentials are still set to the default "
+                "(admin/admin). In production, configure real credentials using "
+                "ConfigCameraUsername/ConfigCameraPassword."
             )
         kp = safe_get("PIDKp", 0.2)
         ki = safe_get("PIDKi", 0.0)
@@ -63,13 +63,13 @@ class PTZTrackingAuto(Capsule):
         idle_seconds = safe_get("MoveToPositionAfterIdleSeconds", 30)
 
         # AĞDA KAMERA BULMA MANTIĞI (OTOMATİK EXECUTOR FARKI)
-        print("[PTZTrackingAuto] Ağda ONVIF kamera aranıyor...")
+        print("[PTZTrackingAuto] Searching for ONVIF cameras on the network...")
         devices = ONVIFWrapper.discover_cameras(timeout=5, username=username, password=password)
         if not devices:
             raise ValueError("Ağda hiçbir ONVIF kamera bulunamadı.")
 
         ip, port, _ = devices[0]
-        print(f"[PTZTrackingAuto] Kamera bulundu: {ip}:{port}")
+        print(f"[PTZTrackingAuto] Camera found: {ip}:{port}")
 
         camera = ONVIFWrapper(ip, port, username, password)
         camera.start_background_loop()
@@ -124,7 +124,6 @@ class PTZTrackingAuto(Capsule):
             camera.continuous_move(0, 0, 0, rate_limit_ms=0)
             return []
 
-        # Box formatı [x_mid, y_mid, w, h]
         box = detections["boxes"][0]
         obj_cx, obj_cy, bw, bh = box[0], box[1], box[2], box[3]
 
@@ -137,26 +136,22 @@ class PTZTrackingAuto(Capsule):
 
         speed_x, speed_y, _ = self.bootstrap["pid"].compute(error_x, error_y, 0.0)
 
-        # Flip X/Y
         if self.bootstrap["flip_x"]:
             speed_x = -speed_x
         if self.bootstrap["flip_y"]:
             speed_y = -speed_y
 
-        # Minimum Speed
         min_speed = self.bootstrap["minimum_camera_speed"]
         if abs(speed_x) < min_speed and speed_x != 0:
             speed_x = min_speed * (1 if speed_x > 0 else -1)
         if abs(speed_y) < min_speed and speed_y != 0:
             speed_y = min_speed * (1 if speed_y > 0 else -1)
 
-        # Dead Zone (tasarım raporu: dead_zone/2)
         half_dead_zone = self.bootstrap["dead_zone"] / 2
         centered = abs(error_x) < half_dead_zone and abs(error_y) < half_dead_zone
         if centered:
             speed_x, speed_y = 0, 0
 
-        # Zoom Logic: hedefin boyutuna göre oransal zoom
         speed_z = 0.0
         if self.bootstrap["zoom_if_able"] and centered:
             target_fill_ratio = 0.35
@@ -188,7 +183,6 @@ class PTZTrackingAuto(Capsule):
         image = Image.get_frame(img=self.images, redis_db=self.redis_db)
         frame_numpy = image.value if image is not None else None
 
-        # --- GoToPreset modu ---
         if movement_type == "GoToPreset":
             if default_preset and not self.bootstrap["preset_applied"]:
                 camera.go_to_preset(default_preset)

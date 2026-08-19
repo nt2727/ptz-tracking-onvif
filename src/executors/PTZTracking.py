@@ -43,9 +43,9 @@ class PTZTracking(Capsule):
         password = safe_get("CameraPassword", "admin")
         if username == "admin" and password == "admin":
             print(
-                "[UYARI] Kamera kimlik bilgileri varsayilan (admin/admin) olarak "
-                "kaldi. Uretimde ConfigCameraUsername/ConfigCameraPassword ile "
-                "gercek kimlik bilgilerini mutlaka ayarlayin."
+                "[WARNING] Camera credentials are still set to the default "
+                "(admin/admin). In production, configure real credentials using "
+                "ConfigCameraUsername/ConfigCameraPassword."
             )
         kp = safe_get("PIDKp", 0.2)
         ki = safe_get("PIDKi", 0.0)
@@ -115,7 +115,6 @@ class PTZTracking(Capsule):
             camera.continuous_move(0, 0, 0, rate_limit_ms=0)
             return []
 
-        # Hedeflenen box'ı al
         box = detections["boxes"][target_idx]
         obj_cx, obj_cy, bw, bh = box[0], box[1], box[2], box[3]
 
@@ -128,38 +127,30 @@ class PTZTracking(Capsule):
 
         speed_x, speed_y, _ = self.bootstrap["pid"].compute(error_x, error_y, 0.0)
 
-        # Flip X/Y
         if self.bootstrap["flip_x"]:
             speed_x = -speed_x
         if self.bootstrap["flip_y"]:
             speed_y = -speed_y
 
-        # Minimum Speed
         min_speed = self.bootstrap["minimum_camera_speed"]
         if abs(speed_x) < min_speed and speed_x != 0:
             speed_x = min_speed * (1 if speed_x > 0 else -1)
         if abs(speed_y) < min_speed and speed_y != 0:
             speed_y = min_speed * (1 if speed_y > 0 else -1)
 
-        # Dead Zone (tasarım raporu: dead_zone/2)
         half_dead_zone = self.bootstrap["dead_zone"] / 2
         centered = abs(error_x) < half_dead_zone and abs(error_y) < half_dead_zone
         if centered:
             speed_x, speed_y = 0, 0
 
-        # Zoom Logic: sadece hedef ortalanmışken, hedefin boyutuna göre zoom yap.
-        # Hedef kutunun genişliği, kare genişliğinin hedef doluluk oranına
-        # ulaşana kadar zoom-in yapılır; oran aşılırsa hafif zoom-out ile
-        # geri çekilir, aksi halde zoom durur.
         speed_z = 0.0
         if self.bootstrap["zoom_if_able"] and centered:
             target_fill_ratio = 0.35
-            zoom_dead_zone = 0.05  # oran bazlı ölü bölge (aşırı salınımı önler)
+            zoom_dead_zone = 0.05
             current_fill_ratio = bw / w if w > 0 else 0.0
             ratio_error = target_fill_ratio - current_fill_ratio
 
             if abs(ratio_error) > zoom_dead_zone:
-                # Basit oransal zoom hızı, [-0.3, 0.3] aralığında sınırlı
                 speed_z = max(-0.3, min(0.3, ratio_error * 1.5))
             else:
                 speed_z = 0.0
@@ -183,8 +174,6 @@ class PTZTracking(Capsule):
         image = Image.get_frame(img=self.images, redis_db=self.redis_db)
         frame_numpy = image.value if image is not None else None
 
-        # --- GoToPreset modu: sürekli PID takibi yerine kamerayı sabit bir
-        # pozisyona götürür. Detection akışından bağımsız çalışır. ---
         if movement_type == "GoToPreset":
             if default_preset and not self.bootstrap["preset_applied"]:
                 camera.go_to_preset(default_preset)
@@ -198,7 +187,6 @@ class PTZTracking(Capsule):
             )
             return packageModel
 
-        # --- Follow modu ---
         if len(self.input_detections) != 0:
             self.bootstrap["last_detection_time"] = time.time()
             self.bootstrap["preset_applied"] = False
@@ -207,27 +195,20 @@ class PTZTracking(Capsule):
             detection_tensor = self.create_detection_tensor(detection_list)
             detections = process_detections(image, detection_tensor)
 
-            # --- Follow Tracker Mantığı ---
-            target_idx = 0 # Varsayılan olarak ilk detection
             if self.bootstrap["follow_tracker"] and self.bootstrap["current_tracker_id"]:
-                # Eğer önceden bir tracker_id varsa, onu listede bul
                 for i, det in enumerate(self.input_detections):
                     if det.get("trackerID") == self.bootstrap["current_tracker_id"]:
                         target_idx = i
                         break
                 else:
-                    # Eğer tracker_id bulunamazsa, en yüksek confidence'a sahip olanı al
                     target_idx = np.argmax(detections["scores"])
                     self.bootstrap["current_tracker_id"] = self.input_detections[target_idx].get("trackerID")
             else:
-                # Eğer follow_tracker kapalıysa, en yüksek confidence
                 target_idx = np.argmax(detections["scores"])
                 if self.bootstrap["follow_tracker"]:
                     self.bootstrap["current_tracker_id"] = self.input_detections[target_idx].get("trackerID")
 
             tracked_boxes = self.track_with_pid(detections, frame_numpy.shape, target_idx)
-            # seeking artık kameranın gerçekten hareket edip etmediğini yansıtır,
-            # sadece hedefin bulunup bulunmadığını değil.
             seeking = camera.seeking()
 
             source_detection = self.input_detections[target_idx]
@@ -241,7 +222,7 @@ class PTZTracking(Capsule):
                             width=float(box[2]),
                             height=float(box[3]),
                         ),
-                        # Takip edilen nesnenin orijinal sınıf/güven bilgisi korunur.
+
                         confidence=source_detection["confidence"],
                         classId=source_detection["classId"],
                         classLabel=source_detection["classLabel"],
@@ -255,8 +236,6 @@ class PTZTracking(Capsule):
             camera.continuous_move(0, 0, 0, rate_limit_ms=0)
             seeking = camera.seeking()
 
-            # --- Idle Reset: hedef belirli süre boyunca hiç görülmediyse
-            # kamerayı varsayılan pozisyona geri döndür. ---
             idle_elapsed = time.time() - self.bootstrap["last_detection_time"]
             if (
                 default_preset

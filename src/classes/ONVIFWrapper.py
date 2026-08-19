@@ -13,10 +13,6 @@ except ImportError:
     _DISCOVER_AVAILABLE = False
 
     def discover(timeout=5):
-        # onvif-zeep-async kütüphanesinde WS-Discovery modülü yoksa gerçek bir
-        # keşif YAPILAMAZ. Sessizce sahte bir IP döndürmek yanlış kameraya
-        # bağlanma riski taşıdığı için burada boş liste döndürülüyor; çağıran
-        # taraf (discover_cameras) bunu "kamera bulunamadı" olarak ele alır.
         return []
 
 from sdks.novavision.src.base.logger import LoggerManager
@@ -148,11 +144,6 @@ class ONVIFWrapper:
         except Exception as e:
             self._connected = False
             if "can't be awaited" in str(e) or isinstance(e, TypeError):
-                # onvif-zeep-async, ONVIF olmayan/yanlış porta bağlanınca alt
-                # katmanda hatayı düzgün fırlatmak yerine None döndürebiliyor;
-                # bu da "'NoneType' object can't be awaited" gibi anlamsız bir
-                # hataya yol açar. Gerçek sebep neredeyse her zaman yanlış
-                # port veya kamerada ONVIF servisinin kapalı olmasıdır.
                 self._connect_error = (
                     f"{e} (muhtemel sebep: yanlış ONVIF portu ya da kamerada "
                     f"ONVIF servisi kapalı — {self.ip}:{self.port} adresinde "
