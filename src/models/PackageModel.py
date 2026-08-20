@@ -229,7 +229,7 @@ class ConfigMoveToPositionAfterIdleSeconds(Config):
 class ConfigPTZAdvanceTrue(Config):
     name: Literal["True"] = "True"
     value: Literal["True"] = "True"
-    type: Literal["bool"] = "bool"
+    type: Literal["boolean"] = "boolean"
     field: Literal["option"] = "option"
     configCameraIP: ConfigCameraIP
     configCameraPort: ConfigCameraPort
@@ -255,7 +255,7 @@ class ConfigPTZAdvanceTrue(Config):
 class ConfigPTZAdvanceFalse(Config):
     name: Literal["False"] = "False"
     value: Literal["False"] = "False"
-    type: Literal["bool"] = "bool"
+    type: Literal["boolean"] = "boolean"
     field: Literal["option"] = "option"
     class Config:
         title = "Disable Advanced Settings"
