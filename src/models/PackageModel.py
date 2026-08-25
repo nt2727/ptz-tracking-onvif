@@ -62,9 +62,9 @@ class OutputSeeking(Output):
         title = "Seeking Status"
 
 
-# ===========================================
+# ==========================================
 # 1. PTZ Tracking Executor Configurations
-# ===========================================
+# ==========================================
 class ConfigCameraIP(Config):
     name: Literal["CameraIP"] = "CameraIP"
     value: str = Field(default="127.0.0.1")
