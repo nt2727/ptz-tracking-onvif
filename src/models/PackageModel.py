@@ -4,6 +4,22 @@ from typing import List, Optional, Union, Literal
 from sdks.novavision.src.base.model import Package, Configs, Outputs, Inputs, \
     Response, Request, Output, Input, Config, Detection, BoundingBox, Image, Images  
 
+class ConfigFalse(Config):
+    name: Literal["False"] = "False"
+    value: Literal["False"] = "False"
+    type: Literal["bool"] = "bool"
+    field: Literal["option"] = "option"
+    class Config:
+        title = "Disable"
+        
+class ConfigTrue(Config):
+    name: Literal["True"] = "True"
+    value: Literal["True"] = "True"
+    type: Literal["bool"] = "bool"
+    field: Literal["option"] = "option"
+    class Config:
+        title = "Enable"
+
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
     value: Images
@@ -56,7 +72,7 @@ class OutputSeeking(Output):
 # ==========================================
 class ConfigCameraIP(Config):
     name: Literal["CameraIP"] = "CameraIP"
-    value: str = Field(default="127.0.0.1")
+    value: str = Field(default="10.20.30.181")
     type: Literal["string"] = "string"
     field: Literal["textInput"] = "textInput"
     class Config:
@@ -74,7 +90,7 @@ class ConfigCameraPort(Config):
 
 class ConfigCameraUsername(Config):
     name: Literal["CameraUsername"] = "CameraUsername"
-    value: str = Field(default="admin")
+    value: str = Field(default="Kervis2721")
     type: Literal["string"] = "string"
     field: Literal["textInput"] = "textInput"
     class Config:
@@ -83,7 +99,7 @@ class ConfigCameraUsername(Config):
 
 class ConfigCameraPassword(Config):
     name: Literal["CameraPassword"] = "CameraPassword"
-    value: str = Field(default="admin")
+    value: str = Field(default="27ONAT21")
     type: Literal["string"] = "string"
     field: Literal["password"] = "password"
     class Config:
@@ -146,45 +162,45 @@ class ConfigMovementType(Config):
 
 class ConfigFollowTracker(Config):
     name: Literal["FollowTracker"] = "FollowTracker"
-    value: bool = True
-    type: Literal["bool"] = "bool"
-    field: Literal["option"] = "option"
+    value: Union[ConfigTrue, ConfigFalse]
+    type: Literal["object"] = "object"
+    field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
     class Config:
         title = "Follow Tracker"
         json_schema_extra = {"shortDescription": "Lock onto tracker ID"}
 
 class ConfigFlipXMovement(Config):
     name: Literal["FlipXMovement"] = "FlipXMovement"
-    value: bool = False
-    type: Literal["bool"] = "bool"
-    field: Literal["option"] = "option"
+    value: Union[ConfigTrue, ConfigFalse]
+    type: Literal["object"] = "object"
+    field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
     class Config:
         title = "Flip X Movement"
         json_schema_extra = {"shortDescription": "Invert horizontal movement"}
 
 class ConfigFlipYMovement(Config):
     name: Literal["FlipYMovement"] = "FlipYMovement"
-    value: bool = True
-    type: Literal["bool"] = "bool"
-    field: Literal["option"] = "option"
+    value: Union[ConfigTrue, ConfigFalse]
+    type: Literal["object"] = "object"
+    field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
     class Config:
         title = "Flip Y Movement"
         json_schema_extra = {"shortDescription": "Invert vertical movement"}
 
 class ConfigZoomIfAble(Config):
     name: Literal["ZoomIfAble"] = "ZoomIfAble"
-    value: bool = False
-    type: Literal["bool"] = "bool"
-    field: Literal["option"] = "option"
+    value: Union[ConfigTrue, ConfigFalse]
+    type: Literal["object"] = "object"
+    field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
     class Config:
         title = "Zoom If Able"
         json_schema_extra = {"shortDescription": "Auto-zoom to fill frame"}
-
+    
 class ConfigSimulateVariableSpeed(Config):
     name: Literal["SimulateVariableSpeed"] = "SimulateVariableSpeed"
-    value: bool = False
-    type: Literal["bool"] = "bool"
-    field: Literal["option"] = "option"
+    value: Union[ConfigTrue, ConfigFalse]
+    type: Literal["object"] = "object"
+    field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
     class Config:
         title = "Simulate Variable Speed"
         json_schema_extra = {"shortDescription": "Pulse-width simulation"}
@@ -244,7 +260,7 @@ class ConfigPTZAdvanceTrue(Config):
     configDefaultPositionPreset: ConfigDefaultPositionPreset
     configMoveToPositionAfterIdleSeconds: ConfigMoveToPositionAfterIdleSeconds
     class Config:
-        title = "Enable Advanced Settings"
+        title = "Enable"
 
 class ConfigPTZAdvanceFalse(Config):
     name: Literal["False"] = "False"
@@ -252,14 +268,13 @@ class ConfigPTZAdvanceFalse(Config):
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
     class Config:
-        title = "Disable Advanced Settings"
+        title = "Disable"
 
 class ConfigPTZAdvance(Config):
     name: Literal["ConfigPTZAdvance"] = "ConfigPTZAdvance"
     value: Union[ConfigPTZAdvanceTrue, ConfigPTZAdvanceFalse]
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    restart: Literal[True] = True
     class Config:
         title = "Advance"
         json_schema_extra = {"shortDescription": "Advanced Settings"}
@@ -314,6 +329,7 @@ class ConfigExecutor(Config):
     value: Union[PTZTrackingExecutor, PTZTrackingAutoExecutor]
     type: Literal["executor"] = "executor"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
+
     class Config:
         title = "Task"
 

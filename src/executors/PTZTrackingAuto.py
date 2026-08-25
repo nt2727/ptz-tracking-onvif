@@ -37,14 +37,14 @@ class PTZTrackingAuto(Capsule):
             val = app.get_param(config, name)
             return val if val is not None else default
 
-        ip = safe_get("CameraIP", "127.0.0.1")
+        ip = safe_get("CameraIP", "10.20.30.181")
         port = safe_get("CameraPort", 80)
-        username = safe_get("CameraUsername", "admin")
-        password = safe_get("CameraPassword", "admin")
-        if username == "admin" and password == "admin":
+        username = safe_get("CameraUsername", "")
+        password = safe_get("CameraPassword", "Kervis2721")
+        if username == "Kervis2721" and password == "27ONAT21":
             print(
                 "[WARNING] Camera credentials are still set to the default "
-                "(admin/admin). In production, configure real credentials using "
+                "(Kervis2721/27ONAT21). In production, configure real credentials using "
                 "ConfigCameraUsername/ConfigCameraPassword."
             )
         kp = safe_get("PIDKp", 0.2)
