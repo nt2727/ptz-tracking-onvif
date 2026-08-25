@@ -71,7 +71,7 @@ class OutputSeeking(Output):
 # 1. PTZ Tracking Executor Configurations
 # ==========================================
 class ConfigCameraIP(Config):
-    name: Literal["CameraIP"] = "CameraIP"
+    name: Literal["cameraIP"] = "CameraIP"
     value: str = Field(default="10.20.30.181")
     type: Literal["string"] = "string"
     field: Literal["textInput"] = "textInput"
@@ -80,7 +80,7 @@ class ConfigCameraIP(Config):
         json_schema_extra = {"shortDescription": "ONVIF Camera IP"}
 
 class ConfigCameraPort(Config):
-    name: Literal["CameraPort"] = "CameraPort"
+    name: Literal["cameraPort"] = "CameraPort"
     value: int = Field(default=80, ge=1, le=65535)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
@@ -89,7 +89,7 @@ class ConfigCameraPort(Config):
         json_schema_extra = {"shortDescription": "ONVIF Port"}
 
 class ConfigCameraUsername(Config):
-    name: Literal["CameraUsername"] = "CameraUsername"
+    name: Literal["cameraUsername"] = "CameraUsername"
     value: str = Field(default="Kervis2721")
     type: Literal["string"] = "string"
     field: Literal["textInput"] = "textInput"
@@ -98,7 +98,7 @@ class ConfigCameraUsername(Config):
         json_schema_extra = {"shortDescription": "ONVIF Username"}
 
 class ConfigCameraPassword(Config):
-    name: Literal["CameraPassword"] = "CameraPassword"
+    name: Literal["cameraPassword"] = "CameraPassword"
     value: str = Field(default="27ONAT21")
     type: Literal["string"] = "string"
     field: Literal["password"] = "password"
@@ -107,7 +107,7 @@ class ConfigCameraPassword(Config):
         json_schema_extra = {"shortDescription": "ONVIF Password"}
 
 class ConfigPIDKp(Config):
-    name: Literal["PIDKp"] = "PIDKp"
+    name: Literal["pIDKp"] = "PIDKp"
     value: float = Field(default=0.2, ge=0, le=1)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
@@ -116,7 +116,7 @@ class ConfigPIDKp(Config):
         json_schema_extra = {"shortDescription": "PID Proportional Gain"}
 
 class ConfigPIDKi(Config):
-    name: Literal["PIDKi"] = "PIDKi"
+    name: Literal["pIDKi"] = "PIDKi"
     value: float = Field(default=0.0, ge=0, le=1)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
@@ -125,7 +125,7 @@ class ConfigPIDKi(Config):
         json_schema_extra = {"shortDescription": "PID Integral Gain"}
 
 class ConfigPIDKd(Config):
-    name: Literal["PIDKd"] = "PIDKd"
+    name: Literal["pIDKd"] = "PIDKd"
     value: float = Field(default=2.0, ge=0, le=10)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
@@ -134,7 +134,7 @@ class ConfigPIDKd(Config):
         json_schema_extra = {"shortDescription": "PID Derivative Gain"}
 
 class ConfigDeadZone(Config):
-    name: Literal["DeadZone"] = "DeadZone"
+    name: Literal["deadZone"] = "DeadZone"
     value: int = Field(default=50, ge=0, le=500)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
@@ -143,7 +143,7 @@ class ConfigDeadZone(Config):
         json_schema_extra = {"shortDescription": "Dead Zone"}
 
 class ConfigUpdateRateLimit(Config):
-    name: Literal["UpdateRateLimit"] = "UpdateRateLimit"
+    name: Literal["updateRateLimit"] = "UpdateRateLimit"
     value: int = Field(default=100, ge=10, le=1000)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
@@ -152,7 +152,7 @@ class ConfigUpdateRateLimit(Config):
         json_schema_extra = {"shortDescription": "Rate Limit ms"}
 
 class ConfigMovementType(Config):
-    name: Literal["MovementType"] = "MovementType"
+    name: Literal["movementType"] = "MovementType"
     value: Literal["Follow", "GoToPreset"] = "Follow"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
@@ -161,7 +161,7 @@ class ConfigMovementType(Config):
         json_schema_extra = {"shortDescription": "Follow or Go To Preset"}
 
 class ConfigFollowTracker(Config):
-    name: Literal["FollowTracker"] = "FollowTracker"
+    name: Literal["followTracker"] = "FollowTracker"
     value: Union[ConfigTrue, ConfigFalse]
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
@@ -170,7 +170,7 @@ class ConfigFollowTracker(Config):
         json_schema_extra = {"shortDescription": "Lock onto tracker ID"}
 
 class ConfigFlipXMovement(Config):
-    name: Literal["FlipXMovement"] = "FlipXMovement"
+    name: Literal["flipXMovement"] = "FlipXMovement"
     value: Union[ConfigTrue, ConfigFalse]
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
@@ -179,7 +179,7 @@ class ConfigFlipXMovement(Config):
         json_schema_extra = {"shortDescription": "Invert horizontal movement"}
 
 class ConfigFlipYMovement(Config):
-    name: Literal["FlipYMovement"] = "FlipYMovement"
+    name: Literal["flipYMovement"] = "FlipYMovement"
     value: Union[ConfigTrue, ConfigFalse]
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
@@ -188,7 +188,7 @@ class ConfigFlipYMovement(Config):
         json_schema_extra = {"shortDescription": "Invert vertical movement"}
 
 class ConfigZoomIfAble(Config):
-    name: Literal["ZoomIfAble"] = "ZoomIfAble"
+    name: Literal["zoomIfAble"] = "ZoomIfAble"
     value: Union[ConfigTrue, ConfigFalse]
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
@@ -197,7 +197,7 @@ class ConfigZoomIfAble(Config):
         json_schema_extra = {"shortDescription": "Auto-zoom to fill frame"}
     
 class ConfigSimulateVariableSpeed(Config):
-    name: Literal["SimulateVariableSpeed"] = "SimulateVariableSpeed"
+    name: Literal["simulateVariableSpeed"] = "SimulateVariableSpeed"
     value: Union[ConfigTrue, ConfigFalse]
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
@@ -206,7 +206,7 @@ class ConfigSimulateVariableSpeed(Config):
         json_schema_extra = {"shortDescription": "Pulse-width simulation"}
 
 class ConfigMinimumCameraSpeed(Config):
-    name: Literal["MinimumCameraSpeed"] = "MinimumCameraSpeed"
+    name: Literal["minimumCameraSpeed"] = "MinimumCameraSpeed"
     value: float = Field(default=0.05, ge=0, le=1)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
@@ -215,7 +215,7 @@ class ConfigMinimumCameraSpeed(Config):
         json_schema_extra = {"shortDescription": "Min speed threshold (0-1)"}
 
 class ConfigDefaultPositionPreset(Config):
-    name: Literal["DefaultPositionPreset"] = "DefaultPositionPreset"
+    name: Literal["defaultPositionPreset"] = "DefaultPositionPreset"
     value: str = Field(default="")
     type: Literal["string"] = "string"
     field: Literal["textInput"] = "textInput"
@@ -224,7 +224,7 @@ class ConfigDefaultPositionPreset(Config):
         json_schema_extra = {"shortDescription": "Home preset name"}
 
 class ConfigMoveToPositionAfterIdleSeconds(Config):
-    name: Literal["MoveToPositionAfterIdleSeconds"] = "MoveToPositionAfterIdleSeconds"
+    name: Literal["moveToPositionAfterIdleSeconds"] = "MoveToPositionAfterIdleSeconds"
     value: int = Field(default=30, ge=0)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
@@ -275,6 +275,7 @@ class ConfigPTZAdvance(Config):
     value: Union[ConfigPTZAdvanceTrue, ConfigPTZAdvanceFalse]
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
+    restart: Literal[True] = True
     class Config:
         title = "Advance"
         json_schema_extra = {"shortDescription": "Advanced Settings"}
