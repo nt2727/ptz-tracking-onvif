@@ -173,7 +173,7 @@ class ConfigMovementType(Config):
 
 class ConfigFollowTracker(Config):
     name: Literal["FollowTracker"] = "FollowTracker"
-    value: Literal["True"] = "True"
+    value: Literal["True","False"] = "True"
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
 
@@ -183,7 +183,7 @@ class ConfigFollowTracker(Config):
 
 class ConfigFlipXMovement(Config):
     name: Literal["FlipXMovement"] = "FlipXMovement"
-    value: Literal["False"] = "False"
+    value: Literal["True","False"] = "False"
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
     class Config:
@@ -192,7 +192,7 @@ class ConfigFlipXMovement(Config):
 
 class ConfigFlipYMovement(Config):
     name: Literal["FlipYMovement"] = "FlipYMovement"
-    vvalue: Literal["True"] = "True"
+    vvalue: Literal["True","False"] = "True"
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
     class Config:
@@ -201,7 +201,7 @@ class ConfigFlipYMovement(Config):
 
 class ConfigZoomIfAble(Config):
     name: Literal["ZoomIfAble"] = "ZoomIfAble"
-    value: Literal["False"] = "False"
+    value: Literal["True","False"] = "False"
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
     class Config:
@@ -210,7 +210,7 @@ class ConfigZoomIfAble(Config):
 
 class ConfigSimulateVariableSpeed(Config):
     name: Literal["SimulateVariableSpeed"] = "SimulateVariableSpeed"
-    value: Literal["False"] = "False"
+    value: Literal["True","False"] = "False"
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
     class Config:
