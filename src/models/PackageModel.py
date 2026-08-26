@@ -85,17 +85,6 @@ class OutputDetections(Output):
         title = "Detections"
 
 
-class OutputSeeking(Output):
-    name: Literal["outputSeeking"] = "outputSeeking"
-    value: bool
-    type: Literal["bool"] = "bool"
-
-    class Config:
-        title = "Seeking Status"
-
-
-
-
 
 
 # ==========================================
@@ -199,7 +188,7 @@ class ConfigUpdateRateLimit(Config):
         title = "Update Rate Limit (ms)"
         json_schema_extra = {"shortDescription": "Rate Limit ms"}
 
-
+########################################################################burayı da class şeklinde düzelt
 class ConfigMovementType(Config):
     name: Literal["MovementType"] = "MovementType"
     value: Literal["Follow", "GoToPreset"] = "Follow"
@@ -355,7 +344,6 @@ class PTZTrackingInputs(Inputs):
 
 class PTZTrackingOutputs(Outputs):
     outputDetections: OutputDetections
-    outputSeeking: OutputSeeking
     outputImage: OutputImage
 
 
