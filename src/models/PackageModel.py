@@ -98,7 +98,7 @@ class ConfigCameraPassword(Config):
     name: Literal["CameraPassword"] = "CameraPassword"
     value: str = Field(default="admin")
     type: Literal["string"] = "string"
-    field: Literal["password"] = "password"
+    field: Literal["textInput"] = "textInput"
 
     class Config:
         title = "Camera Password"
@@ -328,7 +328,6 @@ class PTZTrackingRequest(Request):
 
 class PTZTrackingResponse(Response):
     outputs: PTZTrackingOutputs
-
 
 class PTZTrackingExecutor(Config):
     name: Literal["PTZTracking"] = "PTZTracking"
