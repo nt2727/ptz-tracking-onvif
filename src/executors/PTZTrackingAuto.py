@@ -37,6 +37,14 @@ class PTZTrackingAuto(Capsule):
             val = app.get_param(config, name)
             return val if val is not None else default
 
+        def safe_get_bool(name, default):
+            val = app.get_param(config, name)
+            if val is None:
+                return default
+            if isinstance(val, bool):
+                return val
+            return str(val).strip().lower() == "true"
+
         ip = safe_get("CameraIP", "10.20.30.181")
         port = safe_get("CameraPort", 80)
         username = safe_get("CameraUsername", "")
@@ -53,11 +61,11 @@ class PTZTrackingAuto(Capsule):
         dead_zone = safe_get("DeadZone", 50)
         update_rate = safe_get("UpdateRateLimit", 100)
         movement_type = safe_get("MovementType", "Follow")
-        follow_tracker = safe_get("FollowTracker", True)
-        flip_x = safe_get("FlipXMovement", False)
-        flip_y = safe_get("FlipYMovement", True)
-        zoom_if_able = safe_get("ZoomIfAble", False)
-        simulate_variable_speed = safe_get("SimulateVariableSpeed", False)
+        follow_tracker = safe_get_bool("FollowTracker", True)
+        flip_x = safe_get_bool("FlipXMovement", False)
+        flip_y = safe_get_bool("FlipYMovement", True)
+        zoom_if_able = safe_get_bool("ZoomIfAble", False)
+        simulate_variable_speed = safe_get_bool("SimulateVariableSpeed", False)
         minimum_camera_speed = safe_get("MinimumCameraSpeed", 0.05)
         default_position_preset = safe_get("DefaultPositionPreset", "")
         idle_seconds = safe_get("MoveToPositionAfterIdleSeconds", 30)

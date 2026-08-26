@@ -171,6 +171,53 @@ class ConfigMovementType(Config):
         json_schema_extra = {"shortDescription": "Follow or Go To Preset"}
 
 
+class ConfigFollowTracker(Config):
+    name: Literal["FollowTracker"] = "FollowTracker"
+    value: Literal["True", "False"] = "True"
+    type: Literal["bool"] = "bool"
+    field: Literal["option"] = "option"
+
+    class Config:
+        title = "Follow Tracker"
+        json_schema_extra = {"shortDescription": "Lock onto tracker ID"}
+
+class ConfigFlipXMovement(Config):
+    name: Literal["FlipXMovement"] = "FlipXMovement"
+    value: Literal["True", "False"] = "False"
+    type: Literal["bool"] = "bool"
+    field: Literal["option"] = "option"
+    class Config:
+        title = "Flip X Movement"
+        json_schema_extra = {"shortDescription": "Invert horizontal movement"}
+
+class ConfigFlipYMovement(Config):
+    name: Literal["FlipYMovement"] = "FlipYMovement"
+    vvalue: Literal["True", "False"] = "True"
+    type: Literal["bool"] = "bool"
+    field: Literal["option"] = "option"
+    class Config:
+        title = "Flip Y Movement"
+        json_schema_extra = {"shortDescription": "Invert vertical movement"}
+
+class ConfigZoomIfAble(Config):
+    name: Literal["ZoomIfAble"] = "ZoomIfAble"
+    value: Literal["True", "False"] = "False"
+    type: Literal["bool"] = "bool"
+    field: Literal["option"] = "option"
+    class Config:
+        title = "Zoom If Able"
+        json_schema_extra = {"shortDescription": "Auto-zoom to fill frame"}
+
+class ConfigSimulateVariableSpeed(Config):
+    name: Literal["SimulateVariableSpeed"] = "SimulateVariableSpeed"
+    value: Literal["True", "False"] = "False"
+    type: Literal["bool"] = "bool"
+    field: Literal["option"] = "option"
+    class Config:
+        title = "Simulate Variable Speed"
+        json_schema_extra = {"shortDescription": "Pulse-width simulation"}
+
+
 class ConfigMinimumCameraSpeed(Config):
     name: Literal["MinimumCameraSpeed"] = "MinimumCameraSpeed"
     value: float = Field(default=0.05, ge=0, le=1)
@@ -222,12 +269,17 @@ class ConfigPTZAdvanceTrue(Config):
     DeadZone: ConfigDeadZone
     UpdateRateLimit: ConfigUpdateRateLimit
     MovementType: ConfigMovementType
+    FollowTracker: ConfigFollowTracker
+    FlipXMovement: ConfigFlipXMovement
+    FlipYMovement: ConfigFlipYMovement
+    ZoomIfAble: ConfigZoomIfAble
+    SimulateVariableSpeed: ConfigSimulateVariableSpeed
     MinimumCameraSpeed: ConfigMinimumCameraSpeed
     DefaultPositionPreset: ConfigDefaultPositionPreset
     MoveToPositionAfterIdleSeconds: ConfigMoveToPositionAfterIdleSeconds
 
     class Config:
-        title = "Enable Advanced Settings"
+        title = "Enable"
 
 
 class ConfigPTZAdvanceFalse(Config):
@@ -237,7 +289,7 @@ class ConfigPTZAdvanceFalse(Config):
     field: Literal["option"] = "option"
 
     class Config:
-        title = "Disable Advanced Settings"
+        title = "Disable"
 
 
 class ConfigPTZAdvance(Config):
@@ -309,7 +361,7 @@ class ConfigExecutor(Config):
     class Config:
         title = "Task"
 
-
+ 
 # ==========================================
 # 3. Global Package Configuration
 # ==========================================
