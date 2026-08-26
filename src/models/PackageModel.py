@@ -297,12 +297,12 @@ class ConfigPTZAdvanceTrue(Config):
     PIDKd: ConfigPIDKd
     DeadZone: ConfigDeadZone
     UpdateRateLimit: ConfigUpdateRateLimit
-    MovementType: ConfigMovementType
-    FollowTracker: ConfigFollowTracker
-    FlipXMovement: ConfigFlipXMovement
-    FlipYMovement: ConfigFlipYMovement
-    ZoomIfAble: ConfigZoomIfAble
-    SimulateVariableSpeed: ConfigSimulateVariableSpeed
+    #MovementType: ConfigMovementType
+    #FollowTracker: ConfigFollowTracker
+    #FlipXMovement: ConfigFlipXMovement
+    #FlipYMovement: ConfigFlipYMovement
+    #ZoomIfAble: ConfigZoomIfAble
+    #SimulateVariableSpeed: ConfigSimulateVariableSpeed
     MinimumCameraSpeed: ConfigMinimumCameraSpeed
     DefaultPositionPreset: ConfigDefaultPositionPreset
     MoveToPositionAfterIdleSeconds: ConfigMoveToPositionAfterIdleSeconds
