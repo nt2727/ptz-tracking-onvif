@@ -55,8 +55,7 @@ class OutputDetections(Output):
 class OutputSeeking(Output):
     name: Literal["outputSeeking"] = "outputSeeking"
     value: bool
-    type: Literal["boolean"] = "boolean"
-    field: Literal["boolean"] = "boolean"
+    type: Literal["bool"] = "bool"
 
     class Config:
         title = "Seeking Status"
@@ -178,7 +177,7 @@ class ConfigMovementType(Config):
 class ConfigFollowTracker(Config):
     name: Literal["FollowTracker"] = "FollowTracker"
     value: bool = True
-    type: Literal["boolean"] = "boolean"
+    type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
 
     class Config:
@@ -189,9 +188,8 @@ class ConfigFollowTracker(Config):
 class ConfigFlipXMovement(Config):
     name: Literal["FlipXMovement"] = "FlipXMovement"
     value: bool = False
-    type: Literal["boolean"] = "boolean"
+    type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
-
     class Config:
         title = "Flip X Movement"
         json_schema_extra = {"shortDescription": "Invert horizontal movement"}
@@ -200,7 +198,7 @@ class ConfigFlipXMovement(Config):
 class ConfigFlipYMovement(Config):
     name: Literal["FlipYMovement"] = "FlipYMovement"
     value: bool = True
-    type: Literal["boolean"] = "boolean"
+    type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
 
     class Config:
@@ -211,7 +209,7 @@ class ConfigFlipYMovement(Config):
 class ConfigZoomIfAble(Config):
     name: Literal["ZoomIfAble"] = "ZoomIfAble"
     value: bool = False
-    type: Literal["boolean"] = "boolean"
+    type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
 
     class Config:
@@ -222,7 +220,7 @@ class ConfigZoomIfAble(Config):
 class ConfigSimulateVariableSpeed(Config):
     name: Literal["SimulateVariableSpeed"] = "SimulateVariableSpeed"
     value: bool = False
-    type: Literal["boolean"] = "boolean"
+    type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
 
     class Config:
@@ -269,7 +267,7 @@ class ConfigMoveToPositionAfterIdleSeconds(Config):
 class ConfigPTZAdvanceTrue(Config):
     name: Literal["True"] = "True"
     value: Literal["True"] = "True"
-    type: Literal["boolean"] = "boolean"
+    type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
     CameraIP: ConfigCameraIP
     CameraPort: ConfigCameraPort
@@ -297,7 +295,7 @@ class ConfigPTZAdvanceTrue(Config):
 class ConfigPTZAdvanceFalse(Config):
     name: Literal["False"] = "False"
     value: Literal["False"] = "False"
-    type: Literal["boolean"] = "boolean"
+    type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
 
     class Config:
