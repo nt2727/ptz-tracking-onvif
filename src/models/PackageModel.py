@@ -241,7 +241,7 @@ class ConfigPTZAdvanceFalse(Config):
 
 
 class ConfigPTZAdvance(Config):
-    name: Literal["ConfigPTZAdvance"] = "ConfigPTZAdvance"
+    name: Literal["configPTZAdvance"] = "configPTZAdvance"
     value: Union[ConfigPTZAdvanceTrue, ConfigPTZAdvanceFalse]
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
