@@ -2,8 +2,7 @@ from pydantic import Field, validator
 from typing import List, Optional, Union, Literal
 
 from sdks.novavision.src.base.model import Package, Configs, Outputs, Inputs, \
-    Response, Request, Output, Input, Config, Detection, BoundingBox, Image, Images
-
+    Response, Request, Output, Input, Config, Detection, BoundingBox, Image
 
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
@@ -39,8 +38,16 @@ class InputDetections(Input):
 
 class OutputImage(Output):
     name: Literal["outputImage"] = "outputImage"
-    value: Images
-    type: Literal["Images"] = "Images"
+    value: Union[List[Image], Image]
+    type: str = "object"
+
+    @validator("type", pre=True, always=True)
+    def set_type_based_on_value(cls, value, values):
+        value = values.get('value')
+        if isinstance(value, Image):
+            return "object"
+        elif isinstance(value, list):
+            return "list"
 
     class Config:
         title = "Image"
@@ -192,7 +199,7 @@ class ConfigFlipXMovement(Config):
 
 class ConfigFlipYMovement(Config):
     name: Literal["FlipYMovement"] = "FlipYMovement"
-    vvalue: Literal["True","False"] = "True"
+    value: Literal["True","False"] = "True"
     type: Literal["bool"] = "bool"
     field: Literal["option"] = "option"
     class Config:
