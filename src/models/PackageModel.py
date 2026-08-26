@@ -7,13 +7,19 @@ from sdks.novavision.src.base.model import Package, Configs, Outputs, Inputs, \
 
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
-    value: Images
-    type: Literal["Images"] = "Images"
-    field: Literal["img"] = "img"
+    value: Union[List[Image], Image]
+    type: str = "object"
+
+    @validator("type", pre=True, always=True)
+    def set_type_based_on_value(cls, value, values):
+        value = values.get('value')
+        if isinstance(value, Image):
+            return "object"
+        elif isinstance(value, list):
+            return "list"
 
     class Config:
         title = "Image"
-
 
 class CustomDetection(Detection):
     imgUID: Optional[str] = None
@@ -26,7 +32,6 @@ class InputDetections(Input):
     name: Literal["inputDetections"] = "inputDetections"
     value: List[CustomDetection]
     type: Literal["list"] = "list"
-    field: Literal["detections"] = "detections"
 
     class Config:
         title = "Detections"
@@ -36,7 +41,6 @@ class OutputImage(Output):
     name: Literal["outputImage"] = "outputImage"
     value: Images
     type: Literal["Images"] = "Images"
-    field: Literal["img"] = "img"
 
     class Config:
         title = "Image"
@@ -46,19 +50,12 @@ class OutputDetections(Output):
     name: Literal["outputDetections"] = "outputDetections"
     value: list
     type: Literal["list"] = "list"
-    field: Literal["detections"] = "detections"
 
     class Config:
         title = "Detections"
 
 
-class OutputSeeking(Output):
-    name: Literal["outputSeeking"] = "outputSeeking"
-    value: bool
-    type: Literal["bool"] = "bool"
 
-    class Config:
-        title = "Seeking Status"
 
 
 # ==========================================
@@ -325,7 +322,6 @@ class PTZTrackingInputs(Inputs):
 
 class PTZTrackingOutputs(Outputs):
     outputDetections: OutputDetections
-    outputSeeking: OutputSeeking
     outputImage: OutputImage
 
 
