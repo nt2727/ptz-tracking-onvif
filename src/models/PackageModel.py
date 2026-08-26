@@ -4,10 +4,32 @@ from typing import List, Optional, Union, Literal
 from sdks.novavision.src.base.model import Package, Configs, Outputs, Inputs, \
     Response, Request, Output, Input, Config, Detection, BoundingBox, Image
 
+
+class ConfigTrue(Config):
+ name: Literal["True"] = "True"
+ value: Literal[True] = True
+ type: Literal["bool"] = "bool"
+ field: Literal["option"] = "option"
+
+ class Config:
+     title = "True"
+
+
+class ConfigFalse(Config):
+    name: Literal["False"] = "False"
+    value: Literal[False] = False
+    type: Literal["bool"] = "bool"
+    field: Literal["option"] = "option"
+
+    class Config:
+        title = "False"
+
+
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
     value: Union[List[Image], Image]
     type: str = "object"
+
 
     @validator("type", pre=True, always=True)
     def set_type_based_on_value(cls, value, values):
@@ -19,6 +41,7 @@ class InputImage(Input):
 
     class Config:
         title = "Image"
+
 
 class CustomDetection(Detection):
     imgUID: Optional[str] = None
@@ -60,6 +83,16 @@ class OutputDetections(Output):
 
     class Config:
         title = "Detections"
+
+
+class OutputSeeking(Output):
+    name: Literal["outputSeeking"] = "outputSeeking"
+    value: bool
+    type: Literal["bool"] = "bool"
+
+    class Config:
+        title = "Seeking Status"
+
 
 
 
@@ -180,9 +213,9 @@ class ConfigMovementType(Config):
 
 class ConfigFollowTracker(Config):
     name: Literal["FollowTracker"] = "FollowTracker"
-    value: Literal["True"] = "True"
-    type: Literal["bool"] = "bool"
-    field: Literal["option"] = "option"
+    value: Union[ConfigTrue, ConfigFalse]
+    type: Literal["object"] = "object"
+    field: Literal["dropdownlist"] = "dropdownlist"
 
     class Config:
         title = "Follow Tracker"
@@ -190,36 +223,36 @@ class ConfigFollowTracker(Config):
 
 class ConfigFlipXMovement(Config):
     name: Literal["FlipXMovement"] = "FlipXMovement"
-    value: Literal["False"] = "False"
-    type: Literal["bool"] = "bool"
-    field: Literal["option"] = "option"
+    value: Union[ConfigTrue, ConfigFalse]
+    type: Literal["object"] = "object"
+    field: Literal["dropdownlist"] = "dropdownlist"
     class Config:
         title = "Flip X Movement"
         json_schema_extra = {"shortDescription": "Invert horizontal movement"}
 
 class ConfigFlipYMovement(Config):
     name: Literal["FlipYMovement"] = "FlipYMovement"
-    value: Literal["True"] = "True"
-    type: Literal["bool"] = "bool"
-    field: Literal["option"] = "option"
+    value: Union[ConfigTrue, ConfigFalse]
+    type: Literal["object"] = "object"
+    field: Literal["dropdownlist"] = "dropdownlist"
     class Config:
         title = "Flip Y Movement"
         json_schema_extra = {"shortDescription": "Invert vertical movement"}
 
 class ConfigZoomIfAble(Config):
     name: Literal["ZoomIfAble"] = "ZoomIfAble"
-    value: Literal["False"] = "False"
-    type: Literal["bool"] = "bool"
-    field: Literal["option"] = "option"
+    value: Union[ConfigTrue, ConfigFalse]
+    type: Literal["object"] = "object"
+    field: Literal["dropdownlist"] = "dropdownlist"
     class Config:
         title = "Zoom If Able"
         json_schema_extra = {"shortDescription": "Auto-zoom to fill frame"}
 
 class ConfigSimulateVariableSpeed(Config):
     name: Literal["SimulateVariableSpeed"] = "SimulateVariableSpeed"
-    value: Literal["False"] = "False"
-    type: Literal["bool"] = "bool"
-    field: Literal["option"] = "option"
+    value: Union[ConfigTrue, ConfigFalse]
+    type: Literal["object"] = "object"
+    field: Literal["dropdownlist"] = "dropdownlist"
     class Config:
         title = "Simulate Variable Speed"
         json_schema_extra = {"shortDescription": "Pulse-width simulation"}
@@ -322,6 +355,7 @@ class PTZTrackingInputs(Inputs):
 
 class PTZTrackingOutputs(Outputs):
     outputDetections: OutputDetections
+    outputSeeking: OutputSeeking
     outputImage: OutputImage
 
 
