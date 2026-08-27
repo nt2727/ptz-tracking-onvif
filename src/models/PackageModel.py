@@ -189,6 +189,25 @@ class ConfigUpdateRateLimit(Config):
         json_schema_extra = {"shortDescription": "Rate Limit ms"}
 
 ########################################################################burayı da class şeklinde düzelt
+class Follow(Config):
+ name: Literal["True"] = "True"
+ value: Literal[True] = True
+ type: Literal["bool"] = "bool"
+ field: Literal["option"] = "option"
+
+ class Config:
+     title = "Follow"
+
+
+class GoToPreset(Config):
+    name: Literal["False"] = "False"
+    value: Literal[False] = False
+    type: Literal["bool"] = "bool"
+    field: Literal["option"] = "option"
+
+    class Config:
+        title = "GoToPreset"
+
 class ConfigMovementType(Config):
     name: Literal["MovementType"] = "MovementType"
     value: Literal["Follow", "GoToPreset"] = "Follow"
@@ -297,12 +316,12 @@ class ConfigPTZAdvanceTrue(Config):
     PIDKd: ConfigPIDKd
     DeadZone: ConfigDeadZone
     UpdateRateLimit: ConfigUpdateRateLimit
-    #MovementType: ConfigMovementType
-    #FollowTracker: ConfigFollowTracker
-    #FlipXMovement: ConfigFlipXMovement
-    #FlipYMovement: ConfigFlipYMovement
-    #ZoomIfAble: ConfigZoomIfAble
-    #SimulateVariableSpeed: ConfigSimulateVariableSpeed
+    MovementType: ConfigMovementType
+    FollowTracker: ConfigFollowTracker
+    FlipXMovement: ConfigFlipXMovement
+    FlipYMovement: ConfigFlipYMovement
+    ZoomIfAble: ConfigZoomIfAble
+    SimulateVariableSpeed: ConfigSimulateVariableSpeed
     MinimumCameraSpeed: ConfigMinimumCameraSpeed
     DefaultPositionPreset: ConfigDefaultPositionPreset
     MoveToPositionAfterIdleSeconds: ConfigMoveToPositionAfterIdleSeconds
