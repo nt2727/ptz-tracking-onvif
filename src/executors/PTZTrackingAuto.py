@@ -29,6 +29,8 @@ class PTZTrackingAuto(Capsule):
         self.images = self.request.get_param("inputImage")
         self.input_detections = self.request.get_param("inputDetections")
 
+    #---------------------------------------------------değişmeyen ayarlar burda olacak
+
     @staticmethod
     def bootstrap(config: dict) -> dict:
         app = Application()
@@ -45,16 +47,6 @@ class PTZTrackingAuto(Capsule):
                 return val
             return str(val).strip().lower() == "true"
 
-        ip = safe_get("CameraIP", "10.20.30.181")
-        port = safe_get("CameraPort", 80)
-        username = safe_get("CameraUsername", "")
-        password = safe_get("CameraPassword", "Kervis2721")
-        if username == "Kervis2721" and password == "27ONAT21":
-            print(
-                "[WARNING] Camera credentials are still set to the default "
-                "(Kervis2721/27ONAT21). In production, configure real credentials using "
-                "ConfigCameraUsername/ConfigCameraPassword."
-            )
         kp = safe_get("PIDKp", 0.2)
         ki = safe_get("PIDKi", 0.0)
         kd = safe_get("PIDKd", 2.0)
@@ -67,19 +59,36 @@ class PTZTrackingAuto(Capsule):
         zoom_if_able = safe_get_bool("ZoomIfAble", False)
         simulate_variable_speed = safe_get_bool("SimulateVariableSpeed", False)
         minimum_camera_speed = safe_get("MinimumCameraSpeed", 0.05)
+        if simulate_variable_speed:
+            # %10'un altındaki aralıklı (pulse-width) sinyaller kameranın
+            # hareket etmesi için genellikle yetersiz kalır, bu yüzden
+            # simulate_variable_speed açıkken minimum hız en az 0.1'e çekilir.
+            minimum_camera_speed = max(minimum_camera_speed, 0.1)
         default_position_preset = safe_get("DefaultPositionPreset", "")
-        idle_seconds = safe_get("MoveToPositionAfterIdleSeconds", 30)
+        idle_seconds = safe_get("MoveToPositionAfterIdleSeconds", 0)
+
+        if idle_seconds and not default_position_preset:
+            raise ValueError(
+                "MoveToPositionAfterIdleSeconds bir değere ayarlandı ancak "
+                "DefaultPositionPreset boş. Idle-reset özelliğinin çalışması "
+                "için ConfigDefaultPositionPreset girilmelidir."
+            )
 
         # AĞDA KAMERA BULMA MANTIĞI (OTOMATİK EXECUTOR FARKI)
+        # Auto executor kimlik bilgisi istemez: WS-Discovery zaten anonim
+        # çalışır, bulunan kameraya da boş kullanıcı adı/şifre ile
+        # (şifresiz/açık erişim) bağlanılmaya çalışılır. Manuel IP/port/
+        # kullanıcı adı/şifre girişi gereken senaryolar için PTZTracking
+        # (manuel) executor kullanılmalıdır.
         print("[PTZTrackingAuto] Searching for ONVIF cameras on the network...")
-        devices = ONVIFWrapper.discover_cameras(timeout=5, username=username, password=password)
+        devices = ONVIFWrapper.discover_cameras(timeout=5)
         if not devices:
             raise ValueError("Ağda hiçbir ONVIF kamera bulunamadı.")
 
         ip, port, _ = devices[0]
         print(f"[PTZTrackingAuto] Camera found: {ip}:{port}")
 
-        camera = ONVIFWrapper(ip, port, username, password)
+        camera = ONVIFWrapper(ip, port, "", "")
         camera.start_background_loop()
         pid = PIDController(kp, ki, kd)
 
@@ -97,9 +106,7 @@ class PTZTrackingAuto(Capsule):
             "minimum_camera_speed": minimum_camera_speed,
             "default_position_preset": default_position_preset,
             "idle_seconds": idle_seconds,
-            "last_move_time": time.time(),
             "last_detection_time": time.time(),
-            "idle_counter": 0,
             "current_tracker_id": None,
             "preset_applied": False,
         }
@@ -142,7 +149,16 @@ class PTZTrackingAuto(Capsule):
         error_x = obj_cx - frame_cx
         error_y = obj_cy - frame_cy
 
-        speed_x, speed_y, _ = self.bootstrap["pid"].compute(error_x, error_y, 0.0)
+        # PIDKp/PIDKi/PIDKd 0-1 aralığında normalize edilmiş hata için
+        # tanımlanmıştır (bkz. ConfigPIDKp/Ki/Kd). Ham piksel hatası doğrudan
+        # PID'e verilirse çıktı anında -1/1'e saturasyona uğrar ve smooth
+        # tracking yerine bang-bang hareket oluşur; bu yüzden PID'e vermeden
+        # önce hata kare boyutuna göre normalize edilir. Dead zone kontrolü
+        # ise piksel cinsinden kalmaya devam eder (ConfigDeadZone pixel bazlı).
+        normalized_error_x = error_x / w if w > 0 else 0.0
+        normalized_error_y = error_y / h if h > 0 else 0.0
+
+        speed_x, speed_y, _ = self.bootstrap["pid"].compute(normalized_error_x, normalized_error_y, 0.0)
 
         if self.bootstrap["flip_x"]:
             speed_x = -speed_x
@@ -168,7 +184,12 @@ class PTZTrackingAuto(Capsule):
             ratio_error = target_fill_ratio - current_fill_ratio
 
             if abs(ratio_error) > zoom_dead_zone:
-                speed_z = max(-0.3, min(0.3, ratio_error * 1.5))
+                # Zoom ekseni de PIDKp/Ki/Kd ile yapılandırılan PID'i kullanır
+                # (sabit çarpan/clamp yerine), pan/tilt ile tutarlı davranış
+                # için. ratio_error zaten 0-1 aralığında normalize (bw/w oranı).
+                speed_z = self.bootstrap["pid"].pid_z(ratio_error)
+                if abs(speed_z) < min_speed and speed_z != 0:
+                    speed_z = min_speed * (1 if speed_z > 0 else -1)
             else:
                 speed_z = 0.0
 

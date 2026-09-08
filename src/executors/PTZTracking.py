@@ -67,8 +67,20 @@ class PTZTracking(Capsule):
         zoom_if_able = safe_get_bool("ZoomIfAble", False)
         simulate_variable_speed = safe_get_bool("SimulateVariableSpeed", False)
         minimum_camera_speed = safe_get("MinimumCameraSpeed", 0.05)
+        if simulate_variable_speed:
+            # %10'un altındaki aralıklı (pulse-width) sinyaller kameranın
+            # hareket etmesi için genellikle yetersiz kalır, bu yüzden
+            # simulate_variable_speed açıkken minimum hız en az 0.1'e çekilir.
+            minimum_camera_speed = max(minimum_camera_speed, 0.1)
         default_position_preset = safe_get("DefaultPositionPreset", "")
-        idle_seconds = safe_get("MoveToPositionAfterIdleSeconds", 30)
+        idle_seconds = safe_get("MoveToPositionAfterIdleSeconds", 0)
+
+        if idle_seconds and not default_position_preset:
+            raise ValueError(
+                "MoveToPositionAfterIdleSeconds bir değere ayarlandı ancak "
+                "DefaultPositionPreset boş. Idle-reset özelliğinin çalışması "
+                "için ConfigDefaultPositionPreset girilmelidir."
+            )
 
         camera = ONVIFWrapper(ip, port, username, password)
         camera.start_background_loop()
@@ -88,12 +100,20 @@ class PTZTracking(Capsule):
             "minimum_camera_speed": minimum_camera_speed,
             "default_position_preset": default_position_preset,
             "idle_seconds": idle_seconds,
-            "last_move_time": time.time(),
             "last_detection_time": time.time(),
-            "idle_counter": 0,
             "current_tracker_id": None,
             "preset_applied": False,
         }
+
+    @staticmethod
+    def _normalize_tracker_id(value):
+        # CustomDetection.trackerID Optional[Union[List, int]] olarak
+        # tanımlı; liste geldiğinde skaler bir kimliğe indirgeyerek
+        # sonraki karşılaştırmaların (==) ve current_tracker_id
+        # eşleşmelerinin tutarlı çalışmasını sağlar.
+        if isinstance(value, list):
+            return value[0] if len(value) > 0 else None
+        return value
 
     def extract_detections(self):
         detection_list = []
@@ -109,6 +129,9 @@ class PTZTracking(Capsule):
             class_label_id[class_id] = detection["classLabel"]
 
             self.input_detections[index]["index"] = index
+            self.input_detections[index]["trackerID"] = self._normalize_tracker_id(
+                detection.get("trackerID")
+            )
             detection_list.append([x_mid, y_mid, w, h, confidence, class_id, index])
 
         return np.array(detection_list), class_label_id, img_UID
@@ -133,7 +156,16 @@ class PTZTracking(Capsule):
         error_x = obj_cx - frame_cx
         error_y = obj_cy - frame_cy
 
-        speed_x, speed_y, _ = self.bootstrap["pid"].compute(error_x, error_y, 0.0)
+        # PIDKp/PIDKi/PIDKd 0-1 aralığında normalize edilmiş hata için
+        # tanımlanmıştır (bkz. ConfigPIDKp/Ki/Kd). Ham piksel hatası doğrudan
+        # PID'e verilirse çıktı anında -1/1'e saturasyona uğrar ve smooth
+        # tracking yerine bang-bang hareket oluşur; bu yüzden PID'e vermeden
+        # önce hata kare boyutuna göre normalize edilir. Dead zone kontrolü
+        # ise piksel cinsinden kalmaya devam eder (ConfigDeadZone pixel bazlı).
+        normalized_error_x = error_x / w if w > 0 else 0.0
+        normalized_error_y = error_y / h if h > 0 else 0.0
+
+        speed_x, speed_y, _ = self.bootstrap["pid"].compute(normalized_error_x, normalized_error_y, 0.0)
 
         if self.bootstrap["flip_x"]:
             speed_x = -speed_x
@@ -159,7 +191,12 @@ class PTZTracking(Capsule):
             ratio_error = target_fill_ratio - current_fill_ratio
 
             if abs(ratio_error) > zoom_dead_zone:
-                speed_z = max(-0.3, min(0.3, ratio_error * 1.5))
+                # Zoom ekseni de PIDKp/Ki/Kd ile yapılandırılan PID'i kullanır
+                # (sabit çarpan/clamp yerine), pan/tilt ile tutarlı davranış
+                # için. ratio_error zaten 0-1 aralığında normalize (bw/w oranı).
+                speed_z = self.bootstrap["pid"].pid_z(ratio_error)
+                if abs(speed_z) < min_speed and speed_z != 0:
+                    speed_z = min_speed * (1 if speed_z > 0 else -1)
             else:
                 speed_z = 0.0
 
@@ -203,7 +240,7 @@ class PTZTracking(Capsule):
             detection_tensor = self.create_detection_tensor(detection_list)
             detections = process_detections(image, detection_tensor)
 
-            if self.bootstrap["follow_tracker"] and self.bootstrap["current_tracker_id"]:
+            if self.bootstrap["follow_tracker"] and self.bootstrap["current_tracker_id"] is not None:
                 for i, det in enumerate(self.input_detections):
                     if det.get("trackerID") == self.bootstrap["current_tracker_id"]:
                         target_idx = i
@@ -266,4 +303,4 @@ class PTZTracking(Capsule):
 
 
 if "__main__" == __name__:
-    Executor(sys.argv[1]).run()
+    Executor(sys.argv[1]).run() 

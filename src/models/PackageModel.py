@@ -85,6 +85,15 @@ class OutputDetections(Output):
         title = "Detections"
 
 
+class OutputSeeking(Output):
+    name: Literal["outputSeeking"] = "outputSeeking"
+    value: bool
+    type: Literal["bool"] = "bool"
+
+    class Config:
+        title = "Seeking"
+
+
 
 
 # ==========================================
@@ -290,7 +299,7 @@ class ConfigDefaultPositionPreset(Config):
 
 class ConfigMoveToPositionAfterIdleSeconds(Config):
     name: Literal["MoveToPositionAfterIdleSeconds"] = "MoveToPositionAfterIdleSeconds"
-    value: int = Field(default=30, ge=0)
+    value: int = Field(default=0, ge=0)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
 
@@ -352,8 +361,64 @@ class ConfigPTZAdvance(Config):
         json_schema_extra = {"shortDescription": "Advanced Settings"}
 
 
+# ==========================================
+# 2.1. ConfigPTZAdvanceAuto Toggle Structure
+# (PTZTrackingAuto icin: kamera ag uzerinde WS-Discovery ile otomatik
+# bulunup kimlik bilgisi istenmeden baglanir; bu yuzden CameraIP/Port/
+# Username/Password alanlari bu yapida hic bulunmaz.)
+# ==========================================
+class ConfigPTZAdvanceAutoTrue(Config):
+    name: Literal["True"] = "True"
+    value: Literal["True"] = "True"
+    type: Literal["bool"] = "bool"
+    field: Literal["option"] = "option"
+    PIDKp: ConfigPIDKp
+    PIDKi: ConfigPIDKi
+    PIDKd: ConfigPIDKd
+    DeadZone: ConfigDeadZone
+    UpdateRateLimit: ConfigUpdateRateLimit
+    MovementType: ConfigMovementType
+    FollowTracker: ConfigFollowTracker
+    FlipXMovement: ConfigFlipXMovement
+    FlipYMovement: ConfigFlipYMovement
+    ZoomIfAble: ConfigZoomIfAble
+    SimulateVariableSpeed: ConfigSimulateVariableSpeed
+    MinimumCameraSpeed: ConfigMinimumCameraSpeed
+    DefaultPositionPreset: ConfigDefaultPositionPreset
+    MoveToPositionAfterIdleSeconds: ConfigMoveToPositionAfterIdleSeconds
+
+    class Config:
+        title = "Enable"
+
+
+class ConfigPTZAdvanceAutoFalse(Config):
+    name: Literal["False"] = "False"
+    value: Literal["False"] = "False"
+    type: Literal["bool"] = "bool"
+    field: Literal["option"] = "option"
+
+    class Config:
+        title = "Disable"
+
+
+class ConfigPTZAdvanceAuto(Config):
+    name: Literal["configPTZAdvance"] = "configPTZAdvance"
+    value: Union[ConfigPTZAdvanceAutoTrue, ConfigPTZAdvanceAutoFalse]
+    type: Literal["object"] = "object"
+    field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
+    restart: Literal[True] = True
+
+    class Config:
+        title = "Advance"
+        json_schema_extra = {"shortDescription": "Advanced Settings (Auto - no credentials)"}
+
+
 class PTZTrackingConfigs(Configs):
     configPTZAdvance: ConfigPTZAdvance
+
+
+class PTZTrackingAutoConfigs(Configs):
+    configPTZAdvance: ConfigPTZAdvanceAuto
 
 
 class PTZTrackingInputs(Inputs):
@@ -363,6 +428,7 @@ class PTZTrackingInputs(Inputs):
 
 class PTZTrackingOutputs(Outputs):
     outputDetections: OutputDetections
+    outputSeeking: OutputSeeking
     outputImage: OutputImage
 
 
@@ -375,6 +441,18 @@ class PTZTrackingRequest(Request):
 
 
 class PTZTrackingResponse(Response):
+    outputs: PTZTrackingOutputs
+
+
+class PTZTrackingAutoRequest(Request):
+    inputs: PTZTrackingInputs
+    configs: PTZTrackingAutoConfigs
+
+    class Config:
+        json_schema_extra = {"target": "configs"}
+
+
+class PTZTrackingAutoResponse(Response):
     outputs: PTZTrackingOutputs
 
 class PTZTrackingExecutor(Config):
@@ -390,7 +468,7 @@ class PTZTrackingExecutor(Config):
 
 class PTZTrackingAutoExecutor(Config):
     name: Literal["PTZTrackingAuto"] = "PTZTrackingAuto"
-    value: Union[PTZTrackingRequest, PTZTrackingResponse]
+    value: Union[PTZTrackingAutoRequest, PTZTrackingAutoResponse]
     type: Literal["object"] = "object"
     field: Literal["option"] = "option"
 
