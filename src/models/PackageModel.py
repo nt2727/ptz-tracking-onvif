@@ -197,31 +197,27 @@ class ConfigUpdateRateLimit(Config):
         title = "Update Rate Limit (ms)"
         json_schema_extra = {"shortDescription": "Rate Limit ms"}
 
-########################################################################burayı da class şeklinde düzelt
-class Follow(Config):
- name: Literal["True"] = "True"
- value: Literal[True] = True
- type: Literal["bool"] = "bool"
- field: Literal["option"] = "option"
-
- class Config:
-     title = "Follow"
-
-
-class GoToPreset(Config):
-    name: Literal["False"] = "False"
-    value: Literal[False] = False
-    type: Literal["bool"] = "bool"
+class MovementTypeFollow(Config):
+    name: Literal["Follow"] = "Follow"
+    value: Literal["Follow"] = "Follow"
+    type: Literal["string"] = "string"
     field: Literal["option"] = "option"
+    class Config:
+        title = "Follow"
 
+class MovementTypeGoToPreset(Config):
+    name: Literal["GoToPreset"] = "GoToPreset"
+    value: Literal["GoToPreset"] = "GoToPreset"
+    type: Literal["string"] = "string"
+    field: Literal["option"] = "option"
     class Config:
         title = "GoToPreset"
 
 class ConfigMovementType(Config):
     name: Literal["MovementType"] = "MovementType"
-    value: Literal["Follow", "GoToPreset"] = "Follow"
-    type: Literal["string"] = "string"
-    field: Literal["option"] = "option"
+    value: Union[MovementTypeFollow, MovementTypeGoToPreset]
+    type: Literal["object"] = "object"
+    field: Literal["dropdownlist"] = "dropdownlist"
 
     class Config:
         title = "Movement Type"
