@@ -429,11 +429,10 @@ class PTZTrackingOutputs(Outputs):
 
 
 class PTZTrackingRequest(Request):
-    inputs: Optional[PTZTrackingInputs] = None
-    configs: Optional[PTZTrackingConfigs] = None
+    inputs: PTZTrackingInputs
+    configs: PTZTrackingConfigs
 
     class Config:
-        schema_extra = {"target": "configs"}
         json_schema_extra = {"target": "configs"}
 
 
@@ -442,11 +441,10 @@ class PTZTrackingResponse(Response):
 
 
 class PTZTrackingAutoRequest(Request):
-    inputs: Optional[PTZTrackingInputs] = None
-    configs: Optional[PTZTrackingAutoConfigs] = None
+    inputs: PTZTrackingInputs
+    configs: PTZTrackingAutoConfigs
 
     class Config:
-        schema_extra = {"target": "configs"}
         json_schema_extra = {"target": "configs"}
 
 
@@ -461,7 +459,6 @@ class PTZTrackingExecutor(Config):
 
     class Config:
         title = "PTZTracking"
-        schema_extra = {"target": {"value": 0}}
         json_schema_extra = {"target": {"value": 0}}
 
 
@@ -473,7 +470,6 @@ class PTZTrackingAutoExecutor(Config):
 
     class Config:
         title = "PTZTrackingAuto"
-        schema_extra = {"target": {"value": 0}}
         json_schema_extra = {"target": {"value": 0}}
 
 
