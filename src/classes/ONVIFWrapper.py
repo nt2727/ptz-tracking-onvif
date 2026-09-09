@@ -26,13 +26,21 @@ def _now_ms() -> int:
 
 class VelocityLimits:
 
-    def __init__(self, pan_tilt_space, zoom_space):
-        self.x_min, self.x_max = pan_tilt_space.XRange.Min, pan_tilt_space.XRange.Max
-        self.y_min, self.y_max = pan_tilt_space.YRange.Min, pan_tilt_space.YRange.Max
+    def __init__(self, pan_tilt_space=None, zoom_space=None, x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0):
+        if pan_tilt_space is not None:
+            self.x_min, self.x_max = pan_tilt_space.XRange.Min, pan_tilt_space.XRange.Max
+            self.y_min, self.y_max = pan_tilt_space.YRange.Min, pan_tilt_space.YRange.Max
+        else:
+            self.x_min, self.x_max = x_min, x_max
+            self.y_min, self.y_max = y_min, y_max
         if zoom_space is not None:
             self.z_min, self.z_max = zoom_space.XRange.Min, zoom_space.XRange.Max
         else:
-            self.z_min, self.z_max = 0.0, 0.0
+            self.z_min, self.z_max = z_min, z_max
+
+    @classmethod
+    def default(cls):
+        return cls(pan_tilt_space=None, zoom_space=None, x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
 
     def scale_x(self, v: float) -> float:
         return v * (abs(self.x_min) if v < 0 else abs(self.x_max))
@@ -110,25 +118,33 @@ class ONVIFWrapper:
 
             self._ptz = await self.camera.create_ptz_service()
 
-            config_request = self._ptz.create_type("GetConfigurationOptions")
-            config_request.ConfigurationToken = media_profile.PTZConfiguration.token
-            config_options = await self._ptz.GetConfigurationOptions(config_request)
+            try:
+                config_request = self._ptz.create_type("GetConfigurationOptions")
+                config_request.ConfigurationToken = media_profile.PTZConfiguration.token
+                config_options = await self._ptz.GetConfigurationOptions(config_request)
 
-            pan_tilt_space = None
-            if hasattr(config_options.Spaces, "ContinuousPanTiltVelocitySpace"):
-                spaces = config_options.Spaces.ContinuousPanTiltVelocitySpace
-                if spaces:
-                    pan_tilt_space = spaces[0]
-            if pan_tilt_space is None:
-                raise ValueError("Kamera ContinuousPanTiltVelocitySpace desteklemiyor")
+                pan_tilt_space = None
+                if hasattr(config_options.Spaces, "ContinuousPanTiltVelocitySpace"):
+                    spaces = config_options.Spaces.ContinuousPanTiltVelocitySpace
+                    if spaces:
+                        pan_tilt_space = spaces[0]
 
-            zoom_space = None
-            if hasattr(config_options.Spaces, "ContinuousZoomVelocitySpace"):
-                spaces = config_options.Spaces.ContinuousZoomVelocitySpace
-                if spaces:
-                    zoom_space = spaces[0]
+                zoom_space = None
+                if hasattr(config_options.Spaces, "ContinuousZoomVelocitySpace"):
+                    spaces = config_options.Spaces.ContinuousZoomVelocitySpace
+                    if spaces:
+                        zoom_space = spaces[0]
 
-            self._velocity_limits = VelocityLimits(pan_tilt_space, zoom_space)
+                if pan_tilt_space is not None:
+                    self._velocity_limits = VelocityLimits(pan_tilt_space, zoom_space)
+                else:
+                    self._velocity_limits = VelocityLimits.default()
+            except Exception as e:
+                logger.warning(
+                    f"ONVIFWrapper - GetConfigurationOptions alınamadı ({self.ip}:{self.port}): {e}. "
+                    f"Standart ONVIF hız aralığı [-1.0, 1.0] kullanılıyor."
+                )
+                self._velocity_limits = VelocityLimits.default()
 
             try:
                 presets = await self._ptz.GetPresets({"ProfileToken": self._media_profile_token})
