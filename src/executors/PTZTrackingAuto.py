@@ -19,7 +19,7 @@ from capsules.PTZTracking.src.models.PackageModel import (
 from capsules.PTZTracking.src.classes.ONVIFWrapper import ONVIFWrapper
 from capsules.PTZTracking.src.classes.PIDController import PIDController
 from capsules.PTZTracking.src.utils.response import build_ptz_tracking_response
-from capsules.PTZTracking.src.utils.utils import calculate_bbox_midpoint, process_detections
+from capsules.PTZTracking.src.utils.utils import calculate_bbox_midpoint, process_detections, prepare_output_image
 
 
 class PTZTrackingAuto(Capsule):
@@ -27,6 +27,7 @@ class PTZTrackingAuto(Capsule):
         super().__init__(request, bootstrap)
         self.request.model = PackageModel(**(self.request.data))
         self.images = self.request.get_param("inputImage")
+        self.images = [images] if isinstance(images, dict) else images
         self.input_detections = self.request.get_param("inputDetections")
 
     #---------------------------------------------------değişmeyen ayarlar burda olacak
@@ -204,13 +205,13 @@ class PTZTrackingAuto(Capsule):
 
     def run(self):
         output_detections = []
-        output_image = self.images
         camera = self.bootstrap["camera"]
         movement_type = self.bootstrap["movement_type"]
         default_preset = self.bootstrap["default_position_preset"]
 
         image = Image.get_frame(img=self.images, redis_db=self.redis_db)
         frame_numpy = image.value if image is not None else None
+        output_image = prepare_output_image(image, package_uID=self.uID, redis_db=self.redis_db)
 
         if movement_type == "GoToPreset":
             if default_preset and not self.bootstrap["preset_applied"]:
