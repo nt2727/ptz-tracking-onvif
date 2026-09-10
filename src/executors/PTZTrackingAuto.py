@@ -26,11 +26,9 @@ class PTZTrackingAuto(Capsule):
     def __init__(self, request, bootstrap):
         super().__init__(request, bootstrap)
         self.request.model = PackageModel(**(self.request.data))
-        self.images = self.request.get_param("inputImage")
-        images = [images] if isinstance(images, dict) else images
+        images = self.request.get_param("inputImage")
+        self.images = [images] if isinstance(images, dict) else images
         self.input_detections = self.request.get_param("inputDetections")
-
-    #---------------------------------------------------değişmeyen ayarlar burda olacak
 
     @staticmethod
     def bootstrap(config: dict) -> dict:
@@ -61,9 +59,6 @@ class PTZTrackingAuto(Capsule):
         simulate_variable_speed = safe_get_bool("SimulateVariableSpeed", False)
         minimum_camera_speed = safe_get("MinimumCameraSpeed", 0.05)
         if simulate_variable_speed:
-            # %10'un altındaki aralıklı (pulse-width) sinyaller kameranın
-            # hareket etmesi için genellikle yetersiz kalır, bu yüzden
-            # simulate_variable_speed açıkken minimum hız en az 0.1'e çekilir.
             minimum_camera_speed = max(minimum_camera_speed, 0.1)
         default_position_preset = safe_get("DefaultPositionPreset", "")
         idle_seconds = safe_get("MoveToPositionAfterIdleSeconds", 0)
@@ -75,12 +70,6 @@ class PTZTrackingAuto(Capsule):
                 "için ConfigDefaultPositionPreset girilmelidir."
             )
 
-        # AĞDA KAMERA BULMA MANTIĞI (OTOMATİK EXECUTOR FARKI)
-        # Auto executor kimlik bilgisi istemez: WS-Discovery zaten anonim
-        # çalışır, bulunan kameraya da boş kullanıcı adı/şifre ile
-        # (şifresiz/açık erişim) bağlanılmaya çalışılır. Manuel IP/port/
-        # kullanıcı adı/şifre girişi gereken senaryolar için PTZTracking
-        # (manuel) executor kullanılmalıdır.
         print("[PTZTrackingAuto] Searching for ONVIF cameras on the network...")
         devices = ONVIFWrapper.discover_cameras(timeout=5)
         if not devices:
@@ -150,12 +139,6 @@ class PTZTrackingAuto(Capsule):
         error_x = obj_cx - frame_cx
         error_y = obj_cy - frame_cy
 
-        # PIDKp/PIDKi/PIDKd 0-1 aralığında normalize edilmiş hata için
-        # tanımlanmıştır (bkz. ConfigPIDKp/Ki/Kd). Ham piksel hatası doğrudan
-        # PID'e verilirse çıktı anında -1/1'e saturasyona uğrar ve smooth
-        # tracking yerine bang-bang hareket oluşur; bu yüzden PID'e vermeden
-        # önce hata kare boyutuna göre normalize edilir. Dead zone kontrolü
-        # ise piksel cinsinden kalmaya devam eder (ConfigDeadZone pixel bazlı).
         normalized_error_x = error_x / w if w > 0 else 0.0
         normalized_error_y = error_y / h if h > 0 else 0.0
 
@@ -185,9 +168,6 @@ class PTZTrackingAuto(Capsule):
             ratio_error = target_fill_ratio - current_fill_ratio
 
             if abs(ratio_error) > zoom_dead_zone:
-                # Zoom ekseni de PIDKp/Ki/Kd ile yapılandırılan PID'i kullanır
-                # (sabit çarpan/clamp yerine), pan/tilt ile tutarlı davranış
-                # için. ratio_error zaten 0-1 aralığında normalize (bw/w oranı).
                 speed_z = self.bootstrap["pid"].pid_z(ratio_error)
                 if abs(speed_z) < min_speed and speed_z != 0:
                     speed_z = min_speed * (1 if speed_z > 0 else -1)
@@ -252,7 +232,7 @@ class PTZTrackingAuto(Capsule):
                         confidence=source_detection["confidence"],
                         classId=source_detection["classId"],
                         classLabel=source_detection["classLabel"],
-                        trackerID=0, # Otomatik modda tracker ID yok
+                        trackerID=0, 
                         imgUID=img_UID,
                         UUID=str(uuid.uuid4()),
                         source="",

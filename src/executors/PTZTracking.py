@@ -26,8 +26,8 @@ class PTZTracking(Capsule):
     def __init__(self, request, bootstrap):
         super().__init__(request, bootstrap)
         self.request.model = PackageModel(**(self.request.data))
-        self.images = self.request.get_param("inputImage")
-        images = [images] if isinstance(images, dict) else images
+        images = self.request.get_param("inputImage")
+        self.images = [images] if isinstance(images, dict) else images
         self.input_detections = self.request.get_param("inputDetections")
 
     @staticmethod
