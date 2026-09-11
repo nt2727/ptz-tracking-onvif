@@ -85,10 +85,28 @@ class OutputDetections(Output):
         title = "Detections"
 
 
+class OutputSeekingTrue(Config):
+    name: Literal["True"] = "True"
+    value: Literal[True] = True
+    type: Literal["bool"] = "bool"
+
+    class Config:
+        title = "True"
+
+
+class OutputSeekingFalse(Config):
+    name: Literal["False"] = "False"
+    value: Literal[False] = False
+    type: Literal["bool"] = "bool"
+
+    class Config:
+        title = "False"
+
+
 class OutputSeeking(Output):
     name: Literal["outputSeeking"] = "outputSeeking"
-    value: bool
-    type: Literal["bool"] = "bool"
+    value: Union[OutputSeekingTrue, OutputSeekingFalse]
+    type: Literal["object"] = "object"
 
     class Config:
         title = "Seeking"

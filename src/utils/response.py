@@ -10,6 +10,8 @@ from capsules.PTZTracking.src.models.PackageModel import (
     PTZTrackingOutputs,
     OutputDetections,
     OutputSeeking,
+    OutputSeekingTrue,
+    OutputSeekingFalse,
     OutputImage,
 )
 
@@ -22,7 +24,8 @@ def build_ptz_tracking_response(
     executor_type="PTZTracking",
 ):
     outputDetections = OutputDetections(value=output_detections)
-    outputSeeking = OutputSeeking(value=seeking)
+    seeking_value = OutputSeekingTrue() if seeking else OutputSeekingFalse()
+    outputSeeking = OutputSeeking(value=seeking_value)
     outputImage = OutputImage(value=output_image)
 
     ptzOutputs = PTZTrackingOutputs(
