@@ -89,6 +89,7 @@ class OutputSeekingTrue(Config):
     name: Literal["True"] = "True"
     value: Literal[True] = True
     type: Literal["bool"] = "bool"
+    field: Literal["option"] = "option"
 
     class Config:
         title = "True"
@@ -98,7 +99,7 @@ class OutputSeekingFalse(Config):
     name: Literal["False"] = "False"
     value: Literal[False] = False
     type: Literal["bool"] = "bool"
-
+    field: Literal["option"] = "option"
     class Config:
         title = "False"
 
