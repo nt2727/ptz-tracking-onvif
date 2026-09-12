@@ -85,12 +85,6 @@ class PTZTracking(Capsule):
         camera.start_background_loop()
         pid = PIDController(kp, ki, kd)
 
-        # DÜZELTME #3 (revize): Capsule/Bootstrap framework'ü (sdks.novavision)
-        # incelendiğinde herhangi bir capsule için otomatik çağrılan bir
-        # terminate/stop/cleanup hook'u bulunmuyor - `bootstrap()` sadece
-        # süreç başlarken bir kez çalışıyor. Bu yüzden kamerayı normal süreç
-        # sonlanmasında (ve mümkünse SIGTERM'de) güvenli şekilde durdurmanın
-        # tek güvenilir yolu burada, bootstrap() içinde atexit'e kaydolmak.
         atexit.register(camera.close)
 
         return {
@@ -211,12 +205,17 @@ class PTZTracking(Capsule):
 
         image = Image.get_frame(img=self.images, redis_db=self.redis_db)
         frame_numpy = image.value if image is not None else None
-        output_image = prepare_output_image(image, package_uID=self.uID, redis_db=self.redis_db)
+        # DÜZELTME: prepare_output_image artık burada ÇAĞRILMIYOR.
+        # Çünkü içindeki Image.set_frame, image.value'yu '' yapıyor ve
+        # sonra process_detections image.value.shape çağırınca patlıyor.
 
         if movement_type == "GoToPreset":
             if default_preset and not self.bootstrap["preset_applied"]:
                 camera.go_to_preset(default_preset)
                 self.bootstrap["preset_applied"] = True
+
+            # Erken return olduğu için burada çağırıyoruz:
+            output_image = prepare_output_image(image, package_uID=self.uID, redis_db=self.redis_db)
 
             packageModel = build_ptz_tracking_response(
                 context=self,
@@ -232,7 +231,7 @@ class PTZTracking(Capsule):
 
             detection_list, class_label_id, img_UID = self.extract_detections()
             detection_tensor = self.create_detection_tensor(detection_list)
-            detections = process_detections(image, detection_tensor)
+            detections = process_detections(image, detection_tensor)  # image.value hala ndarray
 
             if self.bootstrap["follow_tracker"] and self.bootstrap["current_tracker_id"] is not None:
                 for i, det in enumerate(self.input_detections):
@@ -261,7 +260,6 @@ class PTZTracking(Capsule):
                             width=float(box[2]),
                             height=float(box[3]),
                         ),
-
                         confidence=source_detection["confidence"],
                         classId=source_detection["classId"],
                         classLabel=source_detection["classLabel"],
@@ -287,6 +285,11 @@ class PTZTracking(Capsule):
                 self.bootstrap["current_tracker_id"] = None
                 seeking = camera.seeking()
 
+        # DÜZELTME: prepare_output_image en sona alındı. Artık tüm
+        # process_detections / track_with_pid çağrıları bittikten sonra
+        # image.value bozuluyor; sorun çıkmıyor.
+        output_image = prepare_output_image(image, package_uID=self.uID, redis_db=self.redis_db)
+
         packageModel = build_ptz_tracking_response(
             context=self,
             output_detections=output_detections,
@@ -297,4 +300,4 @@ class PTZTracking(Capsule):
 
 
 if "__main__" == __name__:
-    Executor(sys.argv[1]).run() 
+    Executor(sys.argv[1]).run()

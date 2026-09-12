@@ -71,11 +71,6 @@ class PTZTrackingAuto(Capsule):
                 "için ConfigDefaultPositionPreset girilmelidir."
             )
 
-        # NOT (düzeltme): Çoğu ONVIF kamera, ContinuousMove/GotoPreset gibi PTZ
-        # komutları için kimlik doğrulama ister. Discovery adımı (WS-Discovery)
-        # kimlik gerektirmez ama bağlantı sonrası PTZ komutları boş kullanıcı
-        # adı/şifre ile büyük olasılıkla reddedilir. Bu yüzden config'den
-        # varsayılan kimlik bilgisi okunuyor (PTZTracking.py ile aynı davranış).
         discovery_username = safe_get("CameraUsername", "admin")
         discovery_password = safe_get("CameraPassword", "admin")
         if discovery_username == "admin" and discovery_password == "admin":
@@ -98,8 +93,6 @@ class PTZTrackingAuto(Capsule):
         camera.start_background_loop()
         pid = PIDController(kp, ki, kd)
 
-        # DÜZELTME #3 (revize): bkz. PTZTracking.py'deki aynı not - framework
-        # otomatik bir shutdown hook'u çağırmıyor, bu yüzden atexit kullanılıyor.
         atexit.register(camera.close)
 
         return {
@@ -158,11 +151,6 @@ class PTZTrackingAuto(Capsule):
             camera.continuous_move(0, 0, 0, rate_limit_ms=0)
             return []
 
-        # DÜZELTME: önceden burada sabit `detections["boxes"][0]` kullanılıyordu,
-        # yani kamera her zaman "listede ilk sırada ne varsa" onu takip
-        # ediyordu (en yüksek confidence'ı veya kilitli tracker ID'yi değil).
-        # Artık PTZTracking.py ile aynı şekilde çağıran yerde seçilen
-        # target_idx kullanılıyor.
         box = detections["boxes"][target_idx]
         obj_cx, obj_cy, bw, bh = box[0], box[1], box[2], box[3]
 
@@ -225,12 +213,14 @@ class PTZTrackingAuto(Capsule):
 
         image = Image.get_frame(img=self.images, redis_db=self.redis_db)
         frame_numpy = image.value if image is not None else None
-        output_image = prepare_output_image(image, package_uID=self.uID, redis_db=self.redis_db)
+        # DÜZELTME: prepare_output_image artık burada ÇAĞRILMIYOR.
 
         if movement_type == "GoToPreset":
             if default_preset and not self.bootstrap["preset_applied"]:
                 camera.go_to_preset(default_preset)
                 self.bootstrap["preset_applied"] = True
+
+            output_image = prepare_output_image(image, package_uID=self.uID, redis_db=self.redis_db)
 
             packageModel = build_ptz_tracking_response(
                 context=self,
@@ -247,11 +237,8 @@ class PTZTrackingAuto(Capsule):
 
             detection_list, class_label_id, img_UID = self.extract_detections()
             detection_tensor = self.create_detection_tensor(detection_list)
-            detections = process_detections(image, detection_tensor)
+            detections = process_detections(image, detection_tensor)  # image.value hala ndarray
 
-            # DÜZELTME: PTZTracking.py ile aynı hedef seçim mantığı.
-            # Önceden burada hiçbir seçim yapılmıyordu, track_with_pid
-            # doğrudan index 0'ı kullanıyordu.
             if self.bootstrap["follow_tracker"] and self.bootstrap["current_tracker_id"] is not None:
                 for i, det in enumerate(self.input_detections):
                     if det.get("trackerID") == self.bootstrap["current_tracker_id"]:
@@ -303,6 +290,8 @@ class PTZTrackingAuto(Capsule):
                 self.bootstrap["preset_applied"] = True
                 self.bootstrap["current_tracker_id"] = None
                 seeking = camera.seeking()
+
+        output_image = prepare_output_image(image, package_uID=self.uID, redis_db=self.redis_db)
 
         packageModel = build_ptz_tracking_response(
             context=self,
