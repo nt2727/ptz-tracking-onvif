@@ -2,6 +2,7 @@ import os
 import sys
 import uuid
 import time
+import atexit
 import numpy as np
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../../"))
@@ -70,6 +71,21 @@ class PTZTrackingAuto(Capsule):
                 "için ConfigDefaultPositionPreset girilmelidir."
             )
 
+        # NOT (düzeltme): Çoğu ONVIF kamera, ContinuousMove/GotoPreset gibi PTZ
+        # komutları için kimlik doğrulama ister. Discovery adımı (WS-Discovery)
+        # kimlik gerektirmez ama bağlantı sonrası PTZ komutları boş kullanıcı
+        # adı/şifre ile büyük olasılıkla reddedilir. Bu yüzden config'den
+        # varsayılan kimlik bilgisi okunuyor (PTZTracking.py ile aynı davranış).
+        discovery_username = safe_get("CameraUsername", "admin")
+        discovery_password = safe_get("CameraPassword", "admin")
+        if discovery_username == "admin" and discovery_password == "admin":
+            print(
+                "[WARNING] Auto-discovery camera credentials are still set to the "
+                "default (admin/admin). Most ONVIF cameras require real "
+                "credentials for PTZ control - configure ConfigCameraUsername/"
+                "ConfigCameraPassword in production."
+            )
+
         print("[PTZTrackingAuto] Searching for ONVIF cameras on the network...")
         devices = ONVIFWrapper.discover_cameras(timeout=5)
         if not devices:
@@ -78,9 +94,13 @@ class PTZTrackingAuto(Capsule):
         ip, port, _ = devices[0]
         print(f"[PTZTrackingAuto] Camera found: {ip}:{port}")
 
-        camera = ONVIFWrapper(ip, port, "", "")
+        camera = ONVIFWrapper(ip, port, discovery_username, discovery_password)
         camera.start_background_loop()
         pid = PIDController(kp, ki, kd)
+
+        # DÜZELTME #3 (revize): bkz. PTZTracking.py'deki aynı not - framework
+        # otomatik bir shutdown hook'u çağırmıyor, bu yüzden atexit kullanılıyor.
+        atexit.register(camera.close)
 
         return {
             "camera": camera,
@@ -101,6 +121,12 @@ class PTZTrackingAuto(Capsule):
             "preset_applied": False,
         }
 
+    @staticmethod
+    def _normalize_tracker_id(value):
+        if isinstance(value, list):
+            return value[0] if len(value) > 0 else None
+        return value
+
     def extract_detections(self):
         detection_list = []
         class_label_id = {}
@@ -115,6 +141,9 @@ class PTZTrackingAuto(Capsule):
             class_label_id[class_id] = detection["classLabel"]
 
             self.input_detections[index]["index"] = index
+            self.input_detections[index]["trackerID"] = self._normalize_tracker_id(
+                detection.get("trackerID")
+            )
             detection_list.append([x_mid, y_mid, w, h, confidence, class_id, index])
 
         return np.array(detection_list), class_label_id, img_UID
@@ -122,14 +151,19 @@ class PTZTrackingAuto(Capsule):
     def create_detection_tensor(self, detection_list):
         return np.array(detection_list, dtype=np.float32)
 
-    def track_with_pid(self, detections, image_shape):
+    def track_with_pid(self, detections, image_shape, target_idx):
         camera = self.bootstrap["camera"]
 
         if len(detections["boxes"]) == 0:
             camera.continuous_move(0, 0, 0, rate_limit_ms=0)
             return []
 
-        box = detections["boxes"][0]
+        # DÜZELTME: önceden burada sabit `detections["boxes"][0]` kullanılıyordu,
+        # yani kamera her zaman "listede ilk sırada ne varsa" onu takip
+        # ediyordu (en yüksek confidence'ı veya kilitli tracker ID'yi değil).
+        # Artık PTZTracking.py ile aynı şekilde çağıran yerde seçilen
+        # target_idx kullanılıyor.
+        box = detections["boxes"][target_idx]
         obj_cx, obj_cy, bw, bh = box[0], box[1], box[2], box[3]
 
         w, h = image_shape[1], image_shape[0]
@@ -181,7 +215,7 @@ class PTZTrackingAuto(Capsule):
             rate_limit_ms=self.bootstrap["update_rate"],
             simulate_variable_speed=self.bootstrap["simulate_variable_speed"]
         )
-        return [detections["boxes"][0]]
+        return [detections["boxes"][target_idx]]
 
     def run(self):
         output_detections = []
@@ -215,10 +249,26 @@ class PTZTrackingAuto(Capsule):
             detection_tensor = self.create_detection_tensor(detection_list)
             detections = process_detections(image, detection_tensor)
 
-            tracked_boxes = self.track_with_pid(detections, frame_numpy.shape)
+            # DÜZELTME: PTZTracking.py ile aynı hedef seçim mantığı.
+            # Önceden burada hiçbir seçim yapılmıyordu, track_with_pid
+            # doğrudan index 0'ı kullanıyordu.
+            if self.bootstrap["follow_tracker"] and self.bootstrap["current_tracker_id"] is not None:
+                for i, det in enumerate(self.input_detections):
+                    if det.get("trackerID") == self.bootstrap["current_tracker_id"]:
+                        target_idx = i
+                        break
+                else:
+                    target_idx = int(np.argmax(detections["scores"]))
+                    self.bootstrap["current_tracker_id"] = self.input_detections[target_idx].get("trackerID")
+            else:
+                target_idx = int(np.argmax(detections["scores"]))
+                if self.bootstrap["follow_tracker"]:
+                    self.bootstrap["current_tracker_id"] = self.input_detections[target_idx].get("trackerID")
+
+            tracked_boxes = self.track_with_pid(detections, frame_numpy.shape, target_idx)
             seeking = camera.seeking()
 
-            source_detection = self.input_detections[0]
+            source_detection = self.input_detections[target_idx]
 
             for box in tracked_boxes:
                 output_detections.append(
@@ -232,7 +282,7 @@ class PTZTrackingAuto(Capsule):
                         confidence=source_detection["confidence"],
                         classId=source_detection["classId"],
                         classLabel=source_detection["classLabel"],
-                        trackerID=0, 
+                        trackerID=self.bootstrap["current_tracker_id"],
                         imgUID=img_UID,
                         UUID=str(uuid.uuid4()),
                         source="",
@@ -251,6 +301,7 @@ class PTZTrackingAuto(Capsule):
             ):
                 camera.go_to_preset(default_preset)
                 self.bootstrap["preset_applied"] = True
+                self.bootstrap["current_tracker_id"] = None
                 seeking = camera.seeking()
 
         packageModel = build_ptz_tracking_response(

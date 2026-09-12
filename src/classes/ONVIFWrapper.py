@@ -281,6 +281,19 @@ class ONVIFWrapper:
         except Exception:
             pass
 
+    def __del__(self):
+        # Güvenlik ağı (Düzeltme #3): executor'ın terminate() hook'u
+        # framework tarafından çağrılmazsa bile, en azından kamera son
+        # komutta hareket halinde kalmasın diye stop denenir. close()
+        # içindeki thread/loop kapatma __del__ sırasında güvenilir
+        # olmayabileceği için (bkz. Python __del__ garantileri), burada
+        # sadece stop() çağrılır; asıl temizlik terminate()/close() ile
+        # yapılmalıdır.
+        try:
+            self.stop()
+        except Exception:
+            pass
+
     # ==================================================================
     # WS-Discovery
     # ==================================================================

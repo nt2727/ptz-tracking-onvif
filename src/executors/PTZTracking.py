@@ -2,6 +2,7 @@ import os
 import sys
 import uuid
 import time
+import atexit
 import numpy as np
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../../"))
@@ -69,9 +70,6 @@ class PTZTracking(Capsule):
         simulate_variable_speed = safe_get_bool("SimulateVariableSpeed", False)
         minimum_camera_speed = safe_get("MinimumCameraSpeed", 0.05)
         if simulate_variable_speed:
-            # %10'un altındaki aralıklı (pulse-width) sinyaller kameranın
-            # hareket etmesi için genellikle yetersiz kalır, bu yüzden
-            # simulate_variable_speed açıkken minimum hız en az 0.1'e çekilir.
             minimum_camera_speed = max(minimum_camera_speed, 0.1)
         default_position_preset = safe_get("DefaultPositionPreset", "")
         idle_seconds = safe_get("MoveToPositionAfterIdleSeconds", 0)
@@ -86,6 +84,14 @@ class PTZTracking(Capsule):
         camera = ONVIFWrapper(ip, port, username, password)
         camera.start_background_loop()
         pid = PIDController(kp, ki, kd)
+
+        # DÜZELTME #3 (revize): Capsule/Bootstrap framework'ü (sdks.novavision)
+        # incelendiğinde herhangi bir capsule için otomatik çağrılan bir
+        # terminate/stop/cleanup hook'u bulunmuyor - `bootstrap()` sadece
+        # süreç başlarken bir kez çalışıyor. Bu yüzden kamerayı normal süreç
+        # sonlanmasında (ve mümkünse SIGTERM'de) güvenli şekilde durdurmanın
+        # tek güvenilir yolu burada, bootstrap() içinde atexit'e kaydolmak.
+        atexit.register(camera.close)
 
         return {
             "camera": camera,
@@ -108,10 +114,6 @@ class PTZTracking(Capsule):
 
     @staticmethod
     def _normalize_tracker_id(value):
-        # CustomDetection.trackerID Optional[Union[List, int]] olarak
-        # tanımlı; liste geldiğinde skaler bir kimliğe indirgeyerek
-        # sonraki karşılaştırmaların (==) ve current_tracker_id
-        # eşleşmelerinin tutarlı çalışmasını sağlar.
         if isinstance(value, list):
             return value[0] if len(value) > 0 else None
         return value
@@ -157,12 +159,6 @@ class PTZTracking(Capsule):
         error_x = obj_cx - frame_cx
         error_y = obj_cy - frame_cy
 
-        # PIDKp/PIDKi/PIDKd 0-1 aralığında normalize edilmiş hata için
-        # tanımlanmıştır (bkz. ConfigPIDKp/Ki/Kd). Ham piksel hatası doğrudan
-        # PID'e verilirse çıktı anında -1/1'e saturasyona uğrar ve smooth
-        # tracking yerine bang-bang hareket oluşur; bu yüzden PID'e vermeden
-        # önce hata kare boyutuna göre normalize edilir. Dead zone kontrolü
-        # ise piksel cinsinden kalmaya devam eder (ConfigDeadZone pixel bazlı).
         normalized_error_x = error_x / w if w > 0 else 0.0
         normalized_error_y = error_y / h if h > 0 else 0.0
 
@@ -192,9 +188,6 @@ class PTZTracking(Capsule):
             ratio_error = target_fill_ratio - current_fill_ratio
 
             if abs(ratio_error) > zoom_dead_zone:
-                # Zoom ekseni de PIDKp/Ki/Kd ile yapılandırılan PID'i kullanır
-                # (sabit çarpan/clamp yerine), pan/tilt ile tutarlı davranış
-                # için. ratio_error zaten 0-1 aralığında normalize (bw/w oranı).
                 speed_z = self.bootstrap["pid"].pid_z(ratio_error)
                 if abs(speed_z) < min_speed and speed_z != 0:
                     speed_z = min_speed * (1 if speed_z > 0 else -1)
